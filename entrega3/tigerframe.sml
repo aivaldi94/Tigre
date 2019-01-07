@@ -136,7 +136,6 @@ fun seq [] = EXP (CONST 0)
 
 fun procEntryExit1 (f : frame,body) =  let
 					   val isMain = if (#name f) = "_tigermain" then true else false
-					   val _ = print (#name f)
 					    fun zipear [] _ = []
 					    | zipear (x::xs) n = [(x,n)] @ zipear xs (n+1)
 						
@@ -151,8 +150,8 @@ fun procEntryExit1 (f : frame,body) =  let
 						| natToReg _ = raise Fail "No deberia pasar (natToReg)"				
 						
 						fun accToMove ((InReg t),n) = if n<6 then (print("inreg <6\n");MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))
-						    | accToMove ((InFrame k),n) = if n<6 then (print("inframe <6\n");MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                        						
-						val listMoves =map accToMove lacc
+						  | accToMove ((InFrame k),n) = if n<6 then (print("inframe <6\n");MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
+						(*val listMoves =map accToMove lacc*)
 
-				   in  if isMain then body else SEQ (seq listMoves,body) end
+				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
 end
