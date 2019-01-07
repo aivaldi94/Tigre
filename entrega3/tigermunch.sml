@@ -8,7 +8,7 @@ open tigerit
 
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let
-	fun its n =  if n<0 then " -" ^ Int.toString(~n) else Int.toString(n) 
+	fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 	val ilist = ref ([] : tigerassem.instr list)
 	
 	fun emit x = ilist := x :: !ilist
