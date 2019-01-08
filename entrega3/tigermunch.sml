@@ -6,6 +6,9 @@ open tigerframe
 open tigertree
 open tigerit
 
+(* Da vuelta los argumentos a partir del septimo, para que sean correctamente pusheados (en orden inverso) *)
+fun sortArgs xs = if length xs > 6 then (List.take(xs,6)) @ rev(List.drop(xs,6)) else xs
+
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let
 	fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
@@ -33,7 +36,7 @@ let
 		                                           in ((emit (OPER {assem="movq (%'s0), %'d0\n",src=[munchExp e2],dst=[t],jump=NONE}));
 												        emit (OPER {assem="movq %'s0, (%'s1)\n",src=[t,munchExp e1],dst=[],jump=NONE}))
 												   end
-			| MOVE (TEMP t, CALL(NAME e,args)) 	=> (munchArgs (0,args); emit (OPER {assem="call "^e^"\n",src=[],dst=[],jump=NONE}); 
+			| MOVE (TEMP t, CALL(NAME e,args)) 	=> (munchArgs (0,sortArgs args); emit (OPER {assem="call "^e^"\n",src=[],dst=[],jump=NONE}); 
 																		emit (OPER {assem="movq %rax, %'d0\n",src=[],dst=[t],jump=NONE}))							   
 			| MOVE (MEM(e1),e2) 				=> emit (OPER {assem="movq %'s0, (%'s1)\n",src=[munchExp e2,munchExp e1],dst=[],jump=NONE})
 			| MOVE (TEMP i,e2) 					=> emit (tigerassem.MOVE {assem="movq %'s0, %'d0\n",src=(munchExp e2),dst=i})
@@ -100,7 +103,7 @@ let
 										 	           emit (OPER {assem=res^" "^l1^"\n",src=[],dst=[],jump=SOME [l1,l2]}))
 										           end
 			| LABEL lab 						=> emit (tigerassem.LABEL {assem=lab^":\n",lab=lab})
-			| EXP (CALL (NAME n,args)) 			=> (munchArgs(0,args);(emit (OPER {assem="call "^n^"\n",src=[],dst=[],jump=NONE})))
+			| EXP (CALL (NAME n,args)) 			=> (munchArgs(0,sortArgs args);(emit (OPER {assem="call "^n^"\n",src=[],dst=[],jump=NONE})))
 			| EXP (CALL (e,args)) 				=> raise Fail "No deberia pasar (call)\n"
 			| _ 								=> emit (OPER {assem = "No hay mas casos (munchStm)\n",src=[],dst=[],jump=NONE})
 		     
