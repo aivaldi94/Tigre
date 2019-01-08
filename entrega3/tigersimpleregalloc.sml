@@ -11,7 +11,7 @@ struct
 		
 		(* COMPLETAR: Temporarios que se pueden usar (p.ej, el temporario que representa a rax. 
 		Diferencia con precolored: el temporario que representa a rbp no se puede usar) *)
-		val asignables = [rv, "rbx",rdi, rsi, rdx, rcx]
+		val asignables = [rv, "rbx", "r10", "r11", "r12", "r13"]
 		(* COMPLETAR: movaMem crea una instrucción que mueve un temporario a memoria. movaTemp, de memoria a un temporario.*)
 		fun movaMem(temp, mempos) =
 			let
