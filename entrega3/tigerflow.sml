@@ -5,6 +5,7 @@ struct
 	open tigertab
 	open Splayset
 
+	val K = 3
 (* ---------------------------------------------------------------------------------------------------------- *)
 	val natToInstr = ref (tabNueva())
 	
@@ -65,12 +66,19 @@ struct
 
 								 
 	val succs = ref (fillSuccs (preFillSuccs (),0))
+	
+	
 									
 (* ---------------------------------------------------------------------------------------------------------- *)
 	
 	fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
 								NONE => raise Fail "error buscoEnTabla"
 								| SOME v => v)
+								
+	fun isMove i = case buscoEnTabla (i,!natToInstr) of
+					MOVE {assem=a,dst=d,src=s} => true
+					| _ => false												
+													
 																						
 	fun forEachN (longNatToInstr,outNueva,outVieja,inNueva,inVieja) = (outNueva,outVieja,inNueva,inVieja)
 	| forEachN (n,outNueva,outVieja,inNueva,inVieja) = let
@@ -118,9 +126,8 @@ struct
 	fun fillInOut () = until (!liveOut, !liveOutOld, !liveIn, !liveInOld)
 														
 	(*******************************************************************************************************************************)
-	
-	(* AGREGAR TABLA DE MOVE RELATED - CREO QUE CONVIENE LLENARLA A LA VEZ QUE EL GRAFO DE INTERF *) 
-	
+	(*Revisar tipo de interf (debe ser un temp asociado a un conjunto de temps) y tambien el de adj para asi mejorar la funcion degree*)	
+	(*revisar bien porque es un lio adj.*)
 	val moveRelated = ref (tabNueva ())
 	val interf = ref (tabNueva())
 	
@@ -133,8 +140,10 @@ struct
 	fun areAdj (t1,t2) = case (tabBusca (t1,!adj)) of
 							NONE => raise Fail "No deberia pasar (temp no encontrado)"
 							| SOME l => List.null (List.filter (fn e => ((e <= t2) andalso (e >= t2))) l)
-												
+			
 	fun getDegree t = List.length (getAdj t)
+	
+	val degree = ref (tabAAplica (id,List.length,!adj))												
 	
 
 	fun getTemps ([],l) = l 
@@ -157,7 +166,25 @@ struct
 	fun isMoveRelated t = case (tabBusca (t,!moveRelated)) of 
 								NONE => false
 								| SOME v => true
-								 
+	fun fillInterf (n,tab) = let
+								val i = buscoEnTabla (n, !natToInstr)
+								val empty = empty String.compare
+								fun findSet (t : temp) = (case tabBusca (t,tab) of
+																NONE => empty
+																| SOME c => c)
+							in case n of
+									0 => case i of 
+										OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then tab else List.foldl (fn (tmp,t) => tabInserta (tmp,union(findSet(tmp),buscoEnTabla(0,!liveOut)),t)) tab d
+										| LABEL {assem=a,lab=l} => tab
+										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; tabInserta (d,difference(union(findSet(d),buscoEnTabla(0,!liveOut)),addList(empty,[s])),tab))
+									| _ => case i of 
+										OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then fillInterf (n-1,tab) else fillInterf (n-1,List.foldl (fn (tmp,t) => tabInserta (tmp,union(findSet(tmp),buscoEnTabla(n,!liveOut)),t)) tab d)
+										| LABEL {assem=a,lab=l} => fillInterf (n-1,tab)
+										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; fillInterf (n-1,tabInserta (d,difference(union(findSet(d),buscoEnTabla(n,!liveOut)),addList(empty,[s])),tab)))
+							end
+	
+	
+	(*							 
 	fun fillInterf (0, tab) = let
 									val i = buscoEnTabla (0, !natToInstr)
 									val empty = empty String.compare
@@ -182,5 +209,18 @@ struct
 										| LABEL {assem=a,lab=l} => fillInterf (n-1,tab)
 										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; fillInterf (n-1,tabInserta (d,difference(union(findSet(d),buscoEnTabla(n,!liveOut)),addList(empty,[s])),tab)))
 								end
+	*)
+	
+	(* Que pasa con el grado igual a K? *)
+(* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse. *)
+(* Hacer lista simplifyWorklist: nodos no relacionados con move y de grado menor a K (supongo ordenado de menor a mayor) *)
+(* Hacer lista freezeWorklist: nodos relacionados con move y de grado menor a K *)
+(* Hacer lista spillWorklist: nodos con grado mayor a K *)
 
+	fun filSimplifyList (tDegree, tMoveRel) = let
+												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),tDegree))
+												val nonMoveRelList = tabClaves (tabFiltra ((fn n => if n = false then true else false),tMoveRel))
+												val empty = empty String.compare
+											  in addList (empty,(lowDegreeList @ nonMoveRelList)) end
+												
 end
