@@ -35,7 +35,7 @@ val wSz = 8				(* word size in bytes *)
 val log2WSz = 3				(* base two logarithm of word size in bytes *)
 val fpPrev = 0				(* offset (bytes) *)
 val offStaticLink = ~8			(* offset (bytes) *)
-val offArgs = 8 (* cuanto arriba del fp empiezan a estar los argumentos pasados por pila*)
+val offArgs = 16 (* cuanto arriba del fp empiezan a estar los argumentos pasados por pila*)
 
 val argsInicial = 0			(* el primer argumento *)
 val argsOffInicial = ~8		(* words *)
@@ -50,6 +50,8 @@ val specialregs = [rv, fp, sp]
 val argregs = []
 val callersaves = []
 val calleesaves = []
+
+fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 
 datatype access = InFrame of int | InReg of tigertemp.label
 
@@ -104,11 +106,11 @@ fun allocArg (f: frame) b =
 	let val acc = 
 		(case b of
 		true =>
-			let	val _ = print("hola \n")
+			let	val _ = print("allocARg InFrame \n")
 				val ret = (argsOffInicial-(!(#actualArg f)*wSz))
 				val _ = #actualArg f := !(#actualArg f)+1
 			in	InFrame ret end
-		| false => InReg(tigertemp.newtemp()))
+		| false => (print("allorArg InReg \n");InReg(tigertemp.newtemp())))
 	in (#arguments f := !(#arguments f) @ [acc];acc) end
 	(* malloc *)
 
@@ -149,8 +151,8 @@ fun procEntryExit1 (f : frame,body) =  let
 						| natToReg 5 = r9
 						| natToReg _ = raise Fail "No deberia pasar (natToReg)"				
 						
-						fun accToMove ((InReg t),n) = if n<6 then (print("inreg <6\n");MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))
-						  | accToMove ((InFrame k),n) = if n<6 then (print("inframe <6\n");MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
+						fun accToMove ((InReg t),n) = if n<6 then (print("inreg <6\n");MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
+						  | accToMove ((InFrame k),n) = if n<6 then (print("inframe <6  "^its(k)^"\n");MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
 						(*val listMoves =map accToMove lacc*)
 
 				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
