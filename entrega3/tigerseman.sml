@@ -28,7 +28,7 @@ val tab_vars : (string, EnvEntry) Tabla = tabInserList(
 		formals=[TString], result=TUnit, extern=true}),
 	("flush", Func{level=topLevel(), label="flush",
 		formals=[], result=TUnit, extern=true}),
-	("getchar", Func{level=topLevel(), label="getchar",
+	("getchar", Func{level=topLevel(), label="getstr",
 		formals=[], result=TString, extern=true}),
 	("ord", Func{level=topLevel(), label="ord",
 		formals=[TString], result=TInt, extern=true}),
