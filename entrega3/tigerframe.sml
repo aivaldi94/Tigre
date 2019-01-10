@@ -38,7 +38,7 @@ val offStaticLink = ~8			(* offset (bytes) *)
 val offArgs = 16 (* cuanto arriba del fp empiezan a estar los argumentos pasados por pila*)
 
 val argsInicial = 0			(* el primer argumento *)
-val argsOffInicial = ~8		(* words *)
+val argsOffInicial = ~16		(* words *)
 val argsGap = wSz			(* bytes *)
 
 val regInicial = 1			(* reg *)
@@ -98,7 +98,7 @@ fun getLocals(f: frame) = #locals f
 *)
 
 (* El InFrame que se agrega al inicio corresponde al static link*)
-fun formals({arguments=ar, ...}: frame) = [InFrame (argsOffInicial)] @ !ar 
+fun formals({arguments=ar, ...}: frame) = [InFrame (offStaticLink)] @ !ar 
 
 fun maxRegFrame(f: frame) = !(#actualReg f)
 
@@ -157,3 +157,4 @@ fun procEntryExit1 (f : frame,body) =  let
 
 				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
 end
+
