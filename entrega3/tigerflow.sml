@@ -126,24 +126,31 @@ struct
 	fun fillInOut () = until (!liveOut, !liveOutOld, !liveIn, !liveInOld)
 														
 	(*******************************************************************************************************************************)
-	(*Revisar tipo de interf (debe ser un temp asociado a un conjunto de temps) y tambien el de adj para asi mejorar la funcion degree*)	
-	(*revisar bien porque es un lio adj.*)
+	(* adj = interf ?*)
 	val moveRelated = ref (tabNueva ())
 	val interf = ref (tabNueva())
-	
-	val adj : (tigertemp.temp, tigertemp.temp list) tigertab.Tabla ref = ref (tabNueva ())
+	val adj = ref (tabNueva())
+	(*val adj : (tigertemp.temp, tigertemp.temp list) tigertab.Tabla ref = ref (tabNueva ())*)
 	
 	fun getAdj t = case (tabBusca (t,!adj)) of
 						NONE => raise Fail "No deberia pasar (temp no encontrado)"
 						| SOME l => l
-	
+						
+	(*
+	Esta funciones de cuando adj tenia tipo (temp,temp list) tabla
 	fun areAdj (t1,t2) = case (tabBusca (t1,!adj)) of
 							NONE => raise Fail "No deberia pasar (temp no encontrado)"
 							| SOME l => List.null (List.filter (fn e => ((e <= t2) andalso (e >= t2))) l)
-			
-	fun getDegree t = List.length (getAdj t)
+	*)
+	(*
+	fun areAdj (t1,t2) = case (tabBusca (t1,!adj)) of
+						NONE => raise Fail "No deberia pasar (temp no encontrado)"
+						| SOME l => List.null (List.filter (fn e => ((e <= t2) andalso (e >= t2))) (Splayset.listItems l))
+*)
 	
-	val degree = ref (tabAAplica (id,List.length,!adj))												
+	fun getDegree t = Splayset.numItems (getAdj t)
+	
+	val degree = ref (tabAAplica (id,Splayset.numItems,!adj))												
 	
 
 	fun getTemps ([],l) = l 
@@ -217,10 +224,19 @@ struct
 (* Hacer lista freezeWorklist: nodos relacionados con move y de grado menor a K *)
 (* Hacer lista spillWorklist: nodos con grado mayor a K *)
 
-	fun filSimplifyList (tDegree, tMoveRel) = let
+	fun getSimplifyList (tDegree, tMoveRel) = let
 												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),tDegree))
 												val nonMoveRelList = tabClaves (tabFiltra ((fn n => if n = false then true else false),tMoveRel))
 												val empty = empty String.compare
 											  in addList (empty,(lowDegreeList @ nonMoveRelList)) end
+
+   fun getFreezeList (tDegree, tMoveRel) = let 
+												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),tDegree))
+												val moveRelList = tabClaves (tabFiltra ((fn n => if n = false then false else true),tMoveRel))
+												val empty = empty String.compare
+											  in addList (empty,(lowDegreeList @ moveRelList)) end
+											
+	val spillWorkList = tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree))									
+   											  
 												
 end
