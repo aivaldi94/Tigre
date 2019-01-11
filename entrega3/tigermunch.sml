@@ -157,7 +157,7 @@ let
 									    emit (OPER {assem="subq $"^its(i)^", %'d0\n",src=[r],dst=[r],jump=NONE})))	                                           
 			| BINOP(MUL,MEM e,CONST i) 	=> result (fn r => (emit (OPER {assem ="movq (%'s0), %'d0\n",src=[munchExp e],dst=[r],jump=NONE});
 									    emit (OPER {assem="imul $"^its(i)^", %'d0\n",src=[r],dst=[r],jump=NONE})))			
-			| BINOP(DIV,e1,e2) 		=> result (fn r => emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1\n",src=[munchExp e2,munchExp e2, 						tigerframe.rv],dst=[tigerframe.rv,r,tigerframe.rdx],jump=NONE}))
+			| BINOP(DIV,e1,e2) 		=> result (fn r => emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1\n",src=[munchExp e1,munchExp e2, 						tigerframe.rv],dst=[tigerframe.rv,r,tigerframe.rdx],jump=NONE}))
 			| MEM (CONST i)			=> result (fn r => emit (OPER {assem="movq ($"^its(i)^"), %'d0\n",src=[],dst=[r],jump=NONE}))
 			| MEM (BINOP(PLUS,e1,CONST i)) 	=> result (fn r => emit (OPER {assem="movq "^its(i)^"(%'s0), %'d0\n",src=[munchExp e1],dst=[r],jump=NONE}))						
 			| MEM (BINOP(PLUS,CONST i,e1)) 	=> result (fn r => emit (OPER {assem="movq "^its(i)^"(%'s0), %'d0\n",src=[munchExp e1],dst=[r],jump=NONE}))					
@@ -191,7 +191,7 @@ let
 										                 else emit (OPER {assem = "pushq $"^its(i-j)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))			
 		| munchArgs (n,(BINOP(MUL,CONST i,CONST j)::xs)) = 	((if (n<6) then emit (OPER {assem = "movq $"^its(i*j)^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
 										                 else emit (OPER {assem = "pushq $"^its(i*j)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))	
-		| munchArgs (n,(BINOP(DIV,e1,e2))::xs) = ((if (n<6) then emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; movq %rax, %"^(natToReg n)^"\n",src=[munchExp e1,munchExp e2, tigerframe.rv],dst=[natToReg n,tigerframe.rv,tigerframe.rdx],jump=NONE}) 
+		| munchArgs (n,(BINOP(DIV,e1,e2))::xs) = ((if (n<6) then emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; movq %rax, %"^(natToReg n)^"\n",src=[munchExp e1,munchExp e2, tigerframe.rv],dst=[tigerframe.rv,tigerframe.rdx,natToReg n],jump=NONE}) 
 		                                                    else emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; pushq %rax\n",src=[munchExp e1,munchExp e2, tigerframe.rv],dst=[tigerframe.rv,tigerframe.rdx],jump=NONE})))								                 							                 					
 
 
