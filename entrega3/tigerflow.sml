@@ -150,7 +150,7 @@ struct
 	
 	fun getDegree t = Splayset.numItems (getAdj t)
 	
-	val degree = ref (tabAAplica (id,Splayset.numItems,!adj))												
+	val degree = ref (tabAAplica (id,Splayset.numItems,!adj)											)
 	
 
 	fun getTemps ([],l) = l 
@@ -219,24 +219,30 @@ struct
 	*)
 	
 	(* Que pasa con el grado igual a K? *)
-(* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse. *)
-(* Hacer lista simplifyWorklist: nodos no relacionados con move y de grado menor a K (supongo ordenado de menor a mayor) *)
-(* Hacer lista freezeWorklist: nodos relacionados con move y de grado menor a K *)
-(* Hacer lista spillWorklist: nodos con grado mayor a K *)
+
+(* simplifyWorklist: nodos no relacionados con move y de grado menor a K *)
 
 	fun getSimplifyList (tDegree, tMoveRel) = let
-												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),tDegree))
-												val nonMoveRelList = tabClaves (tabFiltra ((fn n => if n = false then true else false),tMoveRel))
+												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
+												val nonMoveRelList = tabClaves (tabFiltra ((fn n => if n = false then true else false),!tMoveRel))
 												val empty = empty String.compare
 											  in addList (empty,(lowDegreeList @ nonMoveRelList)) end
 
+(* freezeWorklist: nodos relacionados con move y de grado menor a K *)
+
    fun getFreezeList (tDegree, tMoveRel) = let 
-												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),tDegree))
-												val moveRelList = tabClaves (tabFiltra ((fn n => if n = false then false else true),tMoveRel))
+												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
+												val moveRelList = tabClaves (tabFiltra ((fn n => if n = false then false else true),!tMoveRel))
 												val empty = empty String.compare
 											  in addList (empty,(lowDegreeList @ moveRelList)) end
 											
-	val spillWorkList = tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree))									
+(* spillWorklist: nodos con grado mayor a K *)
+											
+	val spillWorkList = let 
+							val empty = empty String.compare 
+						in addList (empty,tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree)))	end								
    											  
+(* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
+
 												
 end
