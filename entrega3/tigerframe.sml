@@ -1,18 +1,18 @@
 (*
-	Frames para el 80386 (sin displays ni registers).
+	Layout del frame real. Los primeros 6 argumentos son pasados por registros
 
-		|    argn    |	fp+4*(n+1)
+		|    argn    |	
 		|    ...     |
-		|    arg2    |	fp+16
-		|    arg1    |	fp+12
-		|	fp level |  fp+8
-		|  retorno   |	fp+4
-		|   fp ant   |	fp
+		|    arg8    |	fp+24
+		|    arg7    |	fp+16
+		|  retorno   |	fp+8
+		|   rbp ant  |	fp
 		--------------	fp
-		|   local1   |	fp-4
-		|   local2   |	fp-8
-		|    ...     |
-		|   localn   |	fp-4*n
+		| static link|	fp-8
+		|    arg7    |	fp-16
+		|    arg8    |  fp-24
+		|    ...     |	
+		|   local1   |
 *)
 
 structure tigerframe :> tigerframe = struct
@@ -49,7 +49,7 @@ val calldefs = [rv]
 val specialregs = [rv, fp, sp]
 val argregs = []
 val callersaves = []
-val calleesaves = []
+val calleesaves = ["rbx", fp, sp, "r10", "r11", "r12", "r13", "r14", "r15"]
 
 fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 
