@@ -30,7 +30,6 @@ val rdx = "rdx"
 val rcx = "rcx"
 val r8 = "r8"
 val r9 = "r9"
-val ov = "ov"				(* overflow value (edx en el 386) *)
 val wSz = 8				(* word size in bytes *)
 val log2WSz = 3				(* base two logarithm of word size in bytes *)
 val fpPrev = 0				(* offset (bytes) *)
