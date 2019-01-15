@@ -39,9 +39,13 @@ val fillDefs : tigerassem.instr -> tigertemp.temp Splayset.set
 
 val fillUses : tigerassem.instr -> tigertemp.temp Splayset.set
 
+(* findLabel retorna los nodos del natToInstr que tienen como etiqueta a l *)
+
 val findLabel : tigertemp.label -> int list
 
-val preFillSuccs : unit -> tigerassem.instr list
+(* instrList lista de instrucciones de natToInstr*)
+
+val instrList  : tigerassem.instr list
 
 val fillSuccs : tigerassem.instr list * int -> (int, int Splayset.set) tigertab.Tabla
 
@@ -50,6 +54,8 @@ val fillSuccs : tigerassem.instr list * int -> (int, int Splayset.set) tigertab.
 val moveRelated : (tigertemp.temp, bool) tigertab.Tabla ref
 
 val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
+
+type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
 
 val adj : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
 
@@ -73,7 +79,8 @@ val getFreezeList : (tigertemp.temp, int) tigertab.Tabla ref * (tigertemp.temp, 
 
 val spillWorkList : tigertemp.temp Splayset.set
 
+(*
 val worklistMoves : int Splayset.set
-
+*)
 end
 	
