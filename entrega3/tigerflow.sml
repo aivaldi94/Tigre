@@ -44,6 +44,7 @@ struct
 	
 (* ---------------------------------------------------------------------------------------------------------- *)
 	
+	(* Retorna los nodos del natToInstr que tienen como etiqueta a l *)
 	fun findLabel l = tabClaves(tabFiltra ((fn i => case i of 
 					   								LABEL {assem=a,lab=l1} => ((l1 <= l) andalso (l1 >= l))
 													| _ => false), !natToInstr)) 
@@ -51,7 +52,9 @@ struct
 	
 	
 	val succs = ref (tabNueva())
-	fun preFillSuccs () = (map (fn (x,y) => y) (tabAList (! natToInstr)))								
+	
+	(* lista de instrucciones de natToInstr*)
+	val instrList : tigerassem.instr list = (map (fn (x,y) => y) (tabAList (! natToInstr))) 						
 	fun fillSuccs ([],_) = !succs 
 		| fillSuccs ((x::xs),n) = let
 										val empty = empty Int.compare
@@ -65,16 +68,17 @@ struct
 								 end
 
 								 
-	val succs = ref (fillSuccs (preFillSuccs (),0))
+	val succs = ref (fillSuccs (instrList ,0))
 	
 	
 									
 (* ---------------------------------------------------------------------------------------------------------- *)
 	
+	(* busca la clave x en t y retorna el valor asociado*)
 	fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
 								NONE => raise Fail "error buscoEnTabla"
 								| SOME v => v)
-								
+	(* dado un nodo retorna si es un MOVE o no*)							
 	fun isMove i = case buscoEnTabla (i,!natToInstr) of
 					MOVE {assem=a,dst=d,src=s} => true
 					| _ => false												
@@ -185,7 +189,7 @@ struct
 										| LABEL {assem=a,lab=l} => tab
 										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; tabInserta (d,difference(union(findSet(d),buscoEnTabla(0,!liveOut)),addList(empty,[s])),tab))
 									| _ => case i of 
-										OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then fillInterf (n-1,tab) else fillInterf (n-1,List.foldl (fn (tmp,t) => tabInserta (tmp,union(findSet(tmp),buscoEnTabla(n,!liveOut)),t)) tab d)
+										OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then fillInterf (n-1,tab) else fillInterf (n-1,List.foldl (fn (tmp,t) => tabInserta (tmp,(* foldl que agregue aristas que empiezan desde los bi*)union(findSet(tmp),buscoEnTabla(n,!liveOut)),t)) tab d)
 										| LABEL {assem=a,lab=l} => fillInterf (n-1,tab)
 										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; fillInterf (n-1,tabInserta (d,difference(union(findSet(d),buscoEnTabla(n,!liveOut)),addList(empty,[s])),tab)))
 							end
@@ -218,7 +222,8 @@ struct
 								end
 	*)
 	
-	(* Que pasa con el grado igual a K? *)
+	(* Que pasa con el grado igual a K? 
+	   Suponemos que debe estar incluído con el conjunto high*)
 
 (* simplifyWorklist: nodos no relacionados con move y de grado menor a K *)
 
