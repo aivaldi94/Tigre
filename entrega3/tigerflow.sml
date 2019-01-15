@@ -199,7 +199,7 @@ struct
 												val liveoutsList = Splayset.listItems liveouts
 												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
 												val tab'' = List.foldl g tab' liveoutsList
-											in tab' end
+											in tab'' end
 										| LABEL {assem=a,lab=l} => tab
 										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; tabInserta (d,difference(union(findSet(d),buscoEnTabla(0,!liveOut)),addList(empty,[s])),tab))
 
@@ -211,7 +211,19 @@ struct
 																NONE => empty
 																| SOME c => c)
 							in case i of  
-									OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then fillInterf (n-1,tab) else fillInterf (n-1,List.foldl (fn (tmp,t) => tabInserta (tmp,(* foldl que agregue aristas que empiezan desde los bi*)union(findSet(tmp),buscoEnTabla(n,!liveOut)),t)) tab d)
+									OPER {assem=a,dst=d,src=s,jump=j} => 
+									let 
+												(* f inserta en la tabla la tupla (tmp, A union B)
+													donde A son todos los nodos n donde ya existe la arista (tmp,n)
+													B son todos los liveouts en la instrucción donde se define tmp*)
+												val liveouts = buscoEnTabla(n,!liveOut)
+												fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts),t)) 
+												(* tab' tiene todos las aristas que comienzan con di*)
+												val tab' = List.foldl f tab d
+												val liveoutsList = Splayset.listItems liveouts
+												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
+												val tab'' = List.foldl g tab' liveoutsList
+											in fillInterf(n-1,tab'') end
 									| LABEL {assem=a,lab=l} => fillInterf (n-1,tab)
 									| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; fillInterf (n-1,tabInserta (d,difference(union(findSet(d),buscoEnTabla(n,!liveOut)),addList(empty,[s])),tab)))
 							end
