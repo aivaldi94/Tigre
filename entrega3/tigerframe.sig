@@ -4,7 +4,6 @@ sig
 type frame
 type register = string
 val rv : tigertemp.temp
-val ov : tigertemp.temp
 val fp : tigertemp.temp
 val rdi : tigertemp.temp
 val rsi : tigertemp.temp
