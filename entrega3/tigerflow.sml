@@ -126,7 +126,7 @@ struct
 														
 	(*******************************************************************************************************************************)
 	(* adj = interf ?*)
-	val moveRelated = ref (tabNueva ())
+	
 	val interf = ref (tabNueva())
 	val adj = ref (tabNueva())
 	(*val adj : (tigertemp.temp, tigertemp.temp list) tigertab.Tabla ref = ref (tabNueva ())*)
@@ -168,13 +168,26 @@ struct
 																end
 (*******************************************************************************************************************************)
 	
-	fun fillMoveRelated (t1,t2) = (tabInserta (t1, true, !moveRelated) ; tabInserta (t2, true, !moveRelated))
 	
-	fun isMoveRelated t = case (tabBusca (t,!moveRelated)) of 
-								NONE => false
-								| SOME v => true
+	fun fillMoveRelated 0 = let
+								val i = buscoEnTabla (0, !natToInstr)
+							in case i of
+								OPER {assem=_,dst=_,src=_,jump=_} => empty
+								| LABEL {assem=_,lab=_} => empty
+								| MOVE {assem=_,dst=d,src=s} => add (add (empty,s),d)
+							end				
+	  | fillMoveRelated n = let
+								val i = buscoEnTabla (0, !natToInstr)
+							in case i of
+								OPER {assem=_,dst=_,src=_,jump=_} => fillMoveRelated (n-1)
+								| LABEL {assem=_,lab=_} => fillMoveRelated (n-1)
+								| MOVE {assem=_,dst=d,src=s} => add (add (fillMoveRelated (n-1),s),d) 
+							end																		
+													
+	val moveRelated = ref (fillMoveRelated longNatToInstr)
 	
-	(* SAQUÉ EL MOVERELATED PORQUE ERA CUALQUIERA*)
+	fun isMoveRelated t = member (!moveRelated,t)
+	
 (*******************************************************************************************************************************)								
 	fun fillInterf (0,tab) = let
 								val i = buscoEnTabla (0, !natToInstr)
@@ -260,5 +273,6 @@ struct
    											  
 (* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
 
-	fun colorear () = ()								
+	fun colorear () = () 
+												
 end
