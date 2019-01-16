@@ -137,7 +137,7 @@ fun main(args) =
 		val _ = if colored then (let
 								  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 								  val l2 = List.concat (map (fn (f,il) => il) l1)
-								  val _ = tigerflow.colorear ()
+								  val _ = tigerflow.colorear (l2)
 								 in () end) else () 
 		
 		in 
