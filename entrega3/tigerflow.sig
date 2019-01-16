@@ -49,9 +49,7 @@ val instrList  : tigerassem.instr list
 
 val fillSuccs : tigerassem.instr list * int -> (int, int Splayset.set) tigertab.Tabla
 
-
-
-val moveRelated : (tigertemp.temp, bool) tigertab.Tabla ref
+val moveRelated : string Splayset.set ref
 
 val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
 
@@ -67,7 +65,7 @@ val getDegree : tigertemp.temp -> int
 
 val getTemps : tigerassem.instr list * tigertemp.temp Splayset.set -> tigertemp.temp Splayset.set
 
-val fillMoveRelated : tigertemp.temp * tigertemp.temp -> (tigertemp.temp, bool) tigertab.Tabla 
+val fillMoveRelated : int ->  string Splayset.set 
 
 val isMoveRelated : tigertemp.temp -> bool
 
