@@ -8,39 +8,35 @@ struct
 	val K = 3
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
 
-(* ---------------------------------------------------------------------------------------------------------- *)
-	val natToInstr = ref (tabNueva())
-	
-	fun fillNatToInstr ([],_) = !natToInstr
-		| fillNatToInstr (x::xs,n) = tabInserta (n,x,fillNatToInstr (xs,n+1))
+	val instrList = []
 
+	val empty = empty String.compare
+(* ---------------------------------------------------------------------------------------------------------- *)
+	
+	fun fillNatToInstr ([],_) = tabNueva()
+		| fillNatToInstr (x::xs,n) = tabInserta (n,x,fillNatToInstr (xs,n+1))
+	(* PARA CARGAR NATTOINSTR SE NECESITA LA LISTA DE INSTRUCCIONES*)
+	val natToInstr = ref (fillNatToInstr(instrList,0))
+	
 	val longNatToInstr = List.length(tabAList(!natToInstr))
 	
 	fun id x = x
 
 (* ---------------------------------------------------------------------------------------------------------- *)
 	
-	fun fillDefs i = let
-						val empty = empty String.compare
-					 in
-						case i of 
-							OPER {assem=a,dst=d,src=s,jump=j} => addList (empty,d)
-							| LABEL {assem=a,lab=l} => empty
-							| MOVE {assem=a,dst=d,src=s} => addList(empty,[d]) 
-					end
+	fun fillDefs i = case i of 
+						OPER {assem=_,dst=d,src=_,jump=_} => addList (empty,d)
+						| LABEL {assem=_,lab=_} => empty
+						| MOVE {assem=_,dst=d,src=_} => singleton String.compare d 
 							
 	val defs = ref ((tabAAplica (id,fillDefs,!natToInstr)))
 
 (* ---------------------------------------------------------------------------------------------------------- *)
 	
-	fun fillUses i = let
-						val empty = empty String.compare
-  					 in
-						case i of 
-							OPER {assem=a,dst=d,src=s,jump=j} => addList (empty,s)
-							| LABEL {assem=a,lab=l} => empty
-							| MOVE {assem=a,dst=d,src=s} => addList(empty,[s])
-					 end
+	fun fillUses i = case i of 
+						OPER {assem=_,dst=_,src=s,jump=_} => addList (empty,s)
+						| LABEL {assem=_,lab=_} => empty
+						| MOVE {assem=_,dst=_,src=s} => singleton String.compare s
 							
 	val uses = ref ((tabAAplica (id,fillUses,!natToInstr)))
 	
@@ -48,18 +44,16 @@ struct
 	
 	(* Retorna los nodos del natToInstr que tienen como etiqueta a l *)
 	fun findLabel l = tabClaves(tabFiltra ((fn i => case i of 
-					   								LABEL {assem=a,lab=l1} => ((l1 <= l) andalso (l1 >= l))
+					   								LABEL {assem=_,lab=l1} => ((l1 <= l) andalso (l1 >= l))
 													| _ => false), !natToInstr)) 
-										
-	
-	
-	val succs = ref (tabNueva())
 	
 	(* lista de instrucciones de natToInstr*)
-	val instrList : tigerassem.instr list = (map (fn (x,y) => y) (tabAList (! natToInstr))) 						
-	fun fillSuccs ([],_) = !succs 
+	(* ESTO NO TIENE SENTIDO HACERLO PORQUE ESA ES LA LISTA QUE TENEMOS QUE TENER PARA CREAR NATTOINSTR*)
+	(*val instrList : tigerassem.instr list = (map (fn (x,y) => y) (tabAList (! natToInstr))) *)
+							
+	fun fillSuccs ([],_) = tabNueva()
 		| fillSuccs ((x::xs),n) = let
-										val empty = empty Int.compare
+										val empty = Splayset.empty Int.compare
 								  in 
 										case x of 
 											OPER {assem=a,dst=d,src=s,jump=j} => (case j of
@@ -99,14 +93,11 @@ struct
 														val outN = buscoEnTabla (n,outVieja)							
 														
 														val defN = buscoEnTabla (n,!defs)																				
-														
 														val in'' = tabRInserta(n,union(useN,difference(outN,defN)),inNueva)
 														
 														val succsN = listItems (buscoEnTabla (n,!succs))
 														
 														fun index n = listItems (buscoEnTabla (n,in''))
-														
-														val empty = empty String.compare
 														
 														val m = Splayset.addList(empty,List.concat (List.map index succsN))
 																	
@@ -115,21 +106,23 @@ struct
 														forEachN (n+1, out',out'',in',in'')
 													end
 													
-	fun until (outNueva,outVieja,inNueva,inVieja) = let 
+	fun repeatUntil (outNueva,outVieja,inNueva,inVieja) = let 
 														val (outNueva',outVieja',inNueva',inVieja') = forEachN (0,outNueva,outVieja,inNueva,inVieja)
+														val fin = tabIgual (Splayset.equal,outNueva,outNueva') andalso tabIgual (Splayset.equal,inNueva,inNueva')
 													in 
-														tabIgual (Splayset.equal,outNueva,outNueva') andalso tabIgual (Splayset.equal,inNueva,inNueva')
+														if fin then (outNueva',outVieja',inNueva',inVieja') else  repeatUntil(outNueva',outVieja',inNueva',inVieja')
 													end						
-
-	val liveOut = ref(tabNueva())
-
-	val liveOutOld = ref(tabNueva())
-
-	val liveIn = ref(tabNueva())
-
-	val liveInOld = ref(tabNueva())
 													
-	fun fillInOut () = until (!liveOut, !liveOutOld, !liveIn, !liveInOld)
+	fun liveness (0,(outNueva,outVieja,inNueva,inVieja)) = (outNueva,outVieja,inNueva,inVieja)
+		| liveness (n,(outNueva,outVieja,inNueva,inVieja)) = let
+																val inVieja' = tabRInserta(n,empty,inVieja)
+																val outVieja' = tabRInserta(n,empty,outVieja)
+															in liveness(n-1,repeatUntil(outNueva,outVieja',inNueva,inVieja'))
+															end
+													
+	fun referenciar (a,b,c,d) =(ref a, ref b, ref c, ref d)
+	
+	val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(longNatToInstr,(tabNueva(),tabNueva(),tabNueva(),tabNueva())))
 														
 	(*******************************************************************************************************************************)
 	(* adj = interf ?*)
@@ -173,88 +166,76 @@ struct
 																in
 																	ts
 																end
+(*******************************************************************************************************************************)
 	
 	fun fillMoveRelated (t1,t2) = (tabInserta (t1, true, !moveRelated) ; tabInserta (t2, true, !moveRelated))
 	
 	fun isMoveRelated t = case (tabBusca (t,!moveRelated)) of 
 								NONE => false
 								| SOME v => true
-								
+	
+	(* SAQUÉ EL MOVERELATED PORQUE ERA CUALQUIERA*)
+(*******************************************************************************************************************************)								
 	fun fillInterf (0,tab) = let
 								val i = buscoEnTabla (0, !natToInstr)
-								val empty = empty String.compare
 								fun findSet (t : temp) = (case tabBusca (t,tab) of
 																NONE => empty
 																| SOME c => c)
+								val liveouts = buscoEnTabla(0,!liveOut)
+								(* f inserta en la tabla la tupla (tmp, A union B)
+								donde A son todos los nodos n donde ya existe la arista (tmp,n)
+								B son todos los liveouts en la instrucción donde se define tmp*)
+								fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts),t)) 
 								in case i of
-										OPER {assem=a,dst=d,src=s,jump=j} => 
+										OPER {assem=_,dst=d,src=_,jump=_} => 
 											let 
-												(* f inserta en la tabla la tupla (tmp, A union B)
-													donde A son todos los nodos n donde ya existe la arista (tmp,n)
-													B son todos los liveouts en la instrucción donde se define tmp*)
-												val liveouts = buscoEnTabla(0,!liveOut)
-												fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts),t)) 
+												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
 												(* tab' tiene todos las aristas que comienzan con di*)
 												val tab' = List.foldl f tab d
-												val liveoutsList = Splayset.listItems liveouts
-												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
+												val liveoutsList = Splayset.listItems liveouts				
 												val tab'' = List.foldl g tab' liveoutsList
 											in tab'' end
-										| LABEL {assem=a,lab=l} => tab
-										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; tabInserta (d,difference(union(findSet(d),buscoEnTabla(0,!liveOut)),addList(empty,[s])),tab))
-
+										| LABEL {assem=_,lab=_} => tab
+										| MOVE {assem=_,dst=d,src=_} => 
+											let
+												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.add(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
+												val liveouts' = delete (liveouts,d) (* todos los liveouts menos el destino*)
+												val tab' = f(d,tab)
+												val liveoutsList = Splayset.listItems liveouts'				
+												val tab'' = List.foldl g tab' liveoutsList
+											in tab'' end
 							end								
 		| fillInterf (n,tab) = let
 								val i = buscoEnTabla (n, !natToInstr)
-								val empty = empty String.compare
 								fun findSet (t : temp) = (case tabBusca (t,tab) of
 																NONE => empty
 																| SOME c => c)
-							in case i of  
-									OPER {assem=a,dst=d,src=s,jump=j} => 
-									let 
-												(* f inserta en la tabla la tupla (tmp, A union B)
-													donde A son todos los nodos n donde ya existe la arista (tmp,n)
-													B son todos los liveouts en la instrucción donde se define tmp*)
-												val liveouts = buscoEnTabla(n,!liveOut)
-												fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts),t)) 
+								val liveouts = buscoEnTabla(n,!liveOut)
+								(* f inserta en la tabla la tupla (tmp, A union B)
+								donde A son todos los nodos n donde ya existe la arista (tmp,n)
+								B son todos los liveouts en la instrucción donde se define tmp*)
+								fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts),t)) 
+								in case i of
+										OPER {assem=_,dst=d,src=_,jump=_} => 
+											let 
+												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
 												(* tab' tiene todos las aristas que comienzan con di*)
 												val tab' = List.foldl f tab d
-												val liveoutsList = Splayset.listItems liveouts
-												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
+												val liveoutsList = Splayset.listItems liveouts				
 												val tab'' = List.foldl g tab' liveoutsList
 											in fillInterf(n-1,tab'') end
-									| LABEL {assem=a,lab=l} => fillInterf (n-1,tab)
-									| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; fillInterf (n-1,tabInserta (d,difference(union(findSet(d),buscoEnTabla(n,!liveOut)),addList(empty,[s])),tab)))
-							end
+										| LABEL {assem=_,lab=_} => fillInterf(n-1,tab)
+										| MOVE {assem=_,dst=d,src=_} =>
+											let
+												val g = (fn (tmp,t) => tabInserta (tmp,Splayset.add(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
+												val liveouts' = delete (liveouts,d) (* todos los liveouts menos el destino*)
+												val tab' = f(d,tab)
+												val liveoutsList = Splayset.listItems liveouts'				
+												val tab'' = List.foldl g tab' liveoutsList
+											in fillInterf(n-1,tab'') end
+							end		
 	
-	
-	(*							 
-	fun fillInterf (0, tab) = let
-									val i = buscoEnTabla (0, !natToInstr)
-									val empty = empty String.compare
-									fun findSet (t : temp) = (case tabBusca (t,tab) of
-																NONE => empty
-																| SOME c => c)
-								in 
-									case i of 
-										OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then tab else List.foldl (fn (tmp,t) => tabInserta (tmp,union(findSet(tmp),buscoEnTabla(0,!liveOut)),t)) tab d
-										| LABEL {assem=a,lab=l} => tab
-										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; tabInserta (d,difference(union(findSet(d),buscoEnTabla(0,!liveOut)),addList(empty,[s])),tab))
-								end
-		| fillInterf (n,tab) = let
-									val i = buscoEnTabla (n, !natToInstr)
-									val empty = empty String.compare
-									fun findSet (t : temp) = (case tabBusca (t,tab) of
-																NONE => empty
-																| SOME c => c)
-								in 
-									case i of 
-										OPER {assem=a,dst=d,src=s,jump=j} => if (List.length d) = 0 then fillInterf (n-1,tab) else fillInterf (n-1,List.foldl (fn (tmp,t) => tabInserta (tmp,union(findSet(tmp),buscoEnTabla(n,!liveOut)),t)) tab d)
-										| LABEL {assem=a,lab=l} => fillInterf (n-1,tab)
-										| MOVE {assem=a,dst=d,src=s} => (fillMoveRelated (d,s) ; fillInterf (n-1,tabInserta (d,difference(union(findSet(d),buscoEnTabla(n,!liveOut)),addList(empty,[s])),tab)))
-								end
-	*)
+	val interf = ref(fillInterf(longNatToInstr,tabNueva()))
 	
 	(* Que pasa con el grado igual a K? 
 	   Suponemos que debe estar incluído con el conjunto high*)
@@ -264,7 +245,6 @@ struct
 	fun getSimplifyList (tDegree, tMoveRel) = let
 												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
 												val nonMoveRelList = tabClaves (tabFiltra ((fn n => if n = false then true else false),!tMoveRel))
-												val empty = empty String.compare
 											  in addList (empty,(lowDegreeList @ nonMoveRelList)) end
 
 (* freezeWorklist: nodos relacionados con move y de grado menor a K *)
@@ -272,14 +252,11 @@ struct
    fun getFreezeList (tDegree, tMoveRel) = let 
 												val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
 												val moveRelList = tabClaves (tabFiltra ((fn n => if n = false then false else true),!tMoveRel))
-												val empty = empty String.compare
 											  in addList (empty,(lowDegreeList @ moveRelList)) end
 											
 (* spillWorklist: nodos con grado mayor a K *)
 											
-	val spillWorkList = let 
-							val empty = empty String.compare 
-						in addList (empty,tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree)))	end								
+	val spillWorkList = addList (empty,tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree)))						
    											  
 (* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
 
