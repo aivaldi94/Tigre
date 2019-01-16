@@ -10,7 +10,7 @@ struct
 
 	val empty = empty String.compare
 	
-fun colorear (instrList) = 
+fun colorear (instrList : instr list) = 
 	let
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		
@@ -63,7 +63,6 @@ fun colorear (instrList) =
 												| LABEL {assem=a,lab=l} => tabInserta(n,addList(empty,[n+1]),fillSuccs(xs,n+1)) 
 												| MOVE {assem=a,dst=d,src=s} => tabInserta(n,addList(empty,[n+1]),fillSuccs(xs,n+1))	
 									 end
-
 									 
 		val succs = ref (fillSuccs (instrList ,0))
 		
@@ -275,5 +274,5 @@ fun colorear (instrList) =
 	(* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
 
 	in print("ok") end	 
-												
+
 end
