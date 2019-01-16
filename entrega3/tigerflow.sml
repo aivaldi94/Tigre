@@ -5,18 +5,18 @@ struct
 	open tigertab
 	open Splayset
 
+fun colorear (l : instr list) =
+let
 	val K = 3
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
-
-	val instrList = []
-
+	val _ = print ("tigerflow")	
 	val empty = empty String.compare
 (* ---------------------------------------------------------------------------------------------------------- *)
 	
 	fun fillNatToInstr ([],_) = tabNueva()
 		| fillNatToInstr (x::xs,n) = tabInserta (n,x,fillNatToInstr (xs,n+1))
 	(* PARA CARGAR NATTOINSTR SE NECESITA LA LISTA DE INSTRUCCIONES*)
-	val natToInstr = ref (fillNatToInstr(instrList,0))
+	val natToInstr = ref (fillNatToInstr(l,0))
 	
 	val longNatToInstr = List.length(tabAList(!natToInstr))
 	
@@ -64,7 +64,7 @@ struct
 								 end
 
 								 
-	val succs = ref (fillSuccs (instrList ,0))
+	val succs = ref (fillSuccs (l ,0))
 	
 	
 									
@@ -78,7 +78,7 @@ struct
 	fun isMove i = case buscoEnTabla (i,!natToInstr) of
 					MOVE {assem=a,dst=d,src=s} => true
 					| _ => false												
-													
+												
 																						
 	fun forEachN (longNatToInstr,outNueva,outVieja,inNueva,inVieja) = (outNueva,outVieja,inNueva,inVieja)
 	| forEachN (n,outNueva,outVieja,inNueva,inVieja) = let
@@ -272,7 +272,7 @@ struct
 	val spillWorkList = addList (empty,tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree)))						
    											  
 (* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
-
-	fun colorear () = () 
+in ()
+end	
 												
 end

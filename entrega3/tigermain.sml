@@ -27,7 +27,7 @@ fun main(args) =
 		val (asm, l10)		= arg(l9, "-asm")
 		val (colored, l11)		= arg(l10, "-colored")
 		val entrada =
-			case l10 of
+			case l11 of
 			[n] => ((open_in n)
 					handle _ => raise Fail (n^" no existe!"))
 			| [] => std_in
@@ -137,7 +137,9 @@ fun main(args) =
 		val _ = if colored then (let
 								  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 								  val l2 = List.concat (map (fn (f,il) => il) l1)
-								  val _ = tigerflow.colorear ()
+								  val l3 = map (fn i => tigerassem.format id i) l2
+								  val _ = print ("antes de llamar tigerflow")
+								  val _ = tigerflow.colorear (l2)
 								 in () end) else () 
 		
 		in 

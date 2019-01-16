@@ -1,7 +1,7 @@
 signature tigerflow =
 sig
 
-
+(*
 (* tigertab.Tabla que asocia enteros (nodos) con instrucciones *)
 
 val natToInstr : (int, tigerassem.instr) tigertab.Tabla ref	
@@ -45,7 +45,7 @@ val findLabel : tigertemp.label -> int list
 
 (* instrList lista de instrucciones de natToInstr*)
 
-val instrList  : tigerassem.instr list
+val instrList  : tigerassem.instr list ref
 
 val fillSuccs : tigerassem.instr list * int -> (int, int Splayset.set) tigertab.Tabla
 
@@ -76,8 +76,8 @@ val getSimplifyList : (tigertemp.temp, int) tigertab.Tabla ref * (tigertemp.temp
 val getFreezeList : (tigertemp.temp, int) tigertab.Tabla ref * (tigertemp.temp, bool) tigertab.Tabla ref -> tigertemp.temp Splayset.set
 
 val spillWorkList : tigertemp.temp Splayset.set
-
-val colorear : unit -> unit
+*)
+val colorear : tigerassem.instr list -> unit
 (*
 val worklistMoves : int Splayset.set
 *)
