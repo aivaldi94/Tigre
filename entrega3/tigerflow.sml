@@ -260,5 +260,5 @@ struct
    											  
 (* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
 
-												
+	fun colorear () = ()								
 end

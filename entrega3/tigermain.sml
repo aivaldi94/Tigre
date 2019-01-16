@@ -4,7 +4,7 @@ open tigerescap
 open tigerseman
 open tigermunch
 open tigersimpleregalloc
-
+open tigerflow
 open BasicIO Nonstdio
 
 fun lexstream(is: instream) =
@@ -23,8 +23,9 @@ fun main(args) =
 		val (flow, l6)		= arg(l5, "-flow") 
 		val (inter, l7)		= arg(l6, "-inter") 
 		val (precolored, l8)	= arg(l7, "-precolored")
-		val (colored, l9)		= arg(l8, "-colored")
+		val (sregalloc, l9)		= arg(l8, "-sregalloc") (*simple reg alloc*)
 		val (asm, l10)		= arg(l9, "-asm")
+		val (colored, l11)		= arg(l10, "-colored")
 		val entrada =
 			case l10 of
 			[n] => ((open_in n)
@@ -87,16 +88,8 @@ fun main(args) =
 												0 => (asmStrings xs)
 												| 1 => (".align 16\n.type "^lab^", @object\n.size "^lab^", 16\n"^lab^":\n\t.quad "^size^"\n\t.ascii \""^s^"\"\n\n")^(asmStrings xs)
 										end
+		(* funcion auxiliar, aplica el generador de codigo assembler (tigermunch)*)
 			
-			(*
-			case s of
-												"" => (asmStrings xs)
-												| _ => let
-															val size = Int.toString(String.size s)
-															in (".align 16\n.type "^lab^", @object\n.size "^lab^", 16\n"^lab^":\n\t.quad "^size^"\n\t.ascii \""^s^"\"\n\n")^(asmStrings xs)
-														end*)
-		
-		(* funcion auxiliar, aplica el generador de codigo assembler (tigermunch)  *)	
 		fun apCode (lstm,f) = let 
 								val _ = print ("nuevo frame: "^(tigerframe.name f)^"\n")
 							  in (f,List.concat(map (fn s => tigermunch.codeGen f s) lstm)) end
@@ -105,32 +98,21 @@ fun main(args) =
 		
 		val _ = if precolored then (let
 									val _ = printLabels c
-									val l11 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)
-									(*
-									val _ = print ("la longitud de la lista exterior es: "^Int.toString(List.length(l11))^"\n")
-									val _ = map (fn (f,il) => print("La longitud de la lista interior es: "^Int.toString(List.length(il))^"\n")) l11
-									*)
+									val l11 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 									val l12 = List.concat (map (fn (f,il) => il) l11)									
 								  in map (fn (i) => print((tigerassem.format id i) ^ "\n")) l12 end) else [()]
 		
 		
-		(* opcion del debug -colored / imprime el codigo assembler resultante aplicando regalloc (por ahora manda todo a memoria) *)
+		(* opcion del debug -sregalloc / imprime el codigo assembler resultante aplicando regalloc (por ahora manda todo a memoria) *)
 		                          
-		val _ = if colored then (let 
+		val _ = if sregalloc then (let 
 								val _ = printLabels c
 								val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)		
 								val l2 = List.concat (map (fn (f,lin) => tigersimpleregalloc.simpleregalloc f lin) l1)
 							   in map (fn (i) => print((tigerassem.format id i) ^ "\n")) l2 end) else [()]
 		
 		(* funcion auxiliar, escribe el codigo COLOREADO como string, usado para escribir el archivo *)
-		(*
-		fun asmFunction () = let
-							  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)		
-							  val l2 = List.concat (map (fn (f,lin) => tigersimpleregalloc.simpleregalloc f lin) l1)
-						      val l3 = map (fn (i) => (tigerassem.format id i) ^ "\n") l2
-						     in concatInstr l3 end
-						      
-		*)
+		
 		fun asmFunction [] = "\n"
 		    | asmFunction ((body, f):: xs) = let
 							  val nFrame = tigerframe.name f
@@ -150,7 +132,13 @@ fun main(args) =
 							val _ = output(outfile, ".section\t.text.startup,\"ax\",@progbits\n\n")							
 							val _ = output(outfile, asmFunction b)							
 							val _ = close_out outfile
-						  in () end) else ()			   
+						  in () end) else ()
+
+		val _ = if colored then (let
+								  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
+								  val l2 = List.concat (map (fn (f,il) => il) l1)
+								  val _ = tigerflow.colorear ()
+								 in () end) else () 
 		
 		in 
 		print "yes!!\n"

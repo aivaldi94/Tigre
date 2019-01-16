@@ -79,6 +79,7 @@ val getFreezeList : (tigertemp.temp, int) tigertab.Tabla ref * (tigertemp.temp, 
 
 val spillWorkList : tigertemp.temp Splayset.set
 
+val colorear : unit -> unit
 (*
 val worklistMoves : int Splayset.set
 *)
