@@ -21,6 +21,8 @@ fun colorear (instrList : instr list) =
 		
 		val longNatToInstr = List.length(tabAList(!natToInstr)) - 1
 		val _ = print("Cantidad de instrucciones "^Int.toString(longNatToInstr)^"\n")
+		val _ = print ("\nImprimo natToInstr\n")
+		val _ = tigertab.tabPrintIntInstr(!natToInstr)
 		fun id x = x
 
 	(* ---------------------------------------------------------------------------------------------------------- *)
@@ -31,6 +33,8 @@ fun colorear (instrList : instr list) =
 							| MOVE {assem=_,dst=d,src=_} => singleton String.compare d 
 								
 		val defs = ref ((tabAAplica (id,fillDefs,!natToInstr)))
+		val _ = print ("\nImprimo defs\n")
+	val _ = tigertab.tabPrintIntTempSet(!defs)
 
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		
@@ -65,6 +69,8 @@ fun colorear (instrList : instr list) =
 									 end
 									 
 		val succs = ref (fillSuccs (instrList ,0))
+		val _ = print ("\nImprimo succs\n")
+	val _ = tigertab.tabPrintIntIntSet(!succs)
 		
 		
 										
