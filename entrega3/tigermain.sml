@@ -12,6 +12,8 @@ fun lexstream(is: instream) =
 fun errParsing(lbuf) = (print("Error en parsing!("
 	^(makestring(!num_linea))^
 	")["^(Lexing.getLexeme lbuf)^"]\n"); raise Fail "fin!")
+
+
 fun main(args) =
 	let	fun arg(l, s) =
 			(List.exists (fn x => x=s) l, List.filter (fn x => x<>s) l)

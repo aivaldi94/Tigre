@@ -73,6 +73,8 @@ fun colorear (instrList : instr list) =
 	val _ = tigertab.tabPrintIntIntSet(!succs)
 		
 		
+		
+		
 										
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		
@@ -281,6 +283,8 @@ fun colorear (instrList : instr list) =
 								end		
 		
 		val interf = ref(fillInterf(longNatToInstr,tabNueva()))
+		val _ = print ("\nImprimo interf\n")
+		val _ = tigertab.tabPrintTempTempSet(!interf)
 		(* Que pasa con el grado igual a K? 
 		   Suponemos que debe estar incluído con el conjunto high*)
 

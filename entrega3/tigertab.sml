@@ -24,6 +24,7 @@ fun tabEsta(s, t) =
 	SOME _ => true
 	| NONE => false
 
+
 fun tabInserta(s, e, t) = let val t' = copy t in (peekInsert t' (s, e); t') end
 
 fun tabRInserta(s, e, t) = let val t' = copy t in (insert t' (s, e); t') end
@@ -107,6 +108,12 @@ fun tabPrintIntIntSet t = let
 							val l = tabAList t
 							val _ = print ("\nTipo:(int * int Set) Tabla\n")
 							val _ = List.app (fn (n,set) => print (its(n)^" -> {"^(concatStrings(List.map its (Splayset.listItems set)))^"}\n")) l
-						 in () end						 						
+						 in () end
+						 
+fun tabPrintTempTempSet t = let 
+							val l = tabAList t														
+							val _ = print ("\nTipo : (temp * temp Set) Tabla\n")
+							val _ = List.app (fn (t,set) => print (t^" -> {"^(concatStrings(Splayset.listItems set))^"}\n")) l
+						 in () end														
 						 
 end
