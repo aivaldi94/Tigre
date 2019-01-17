@@ -8,7 +8,7 @@ struct
 	val K = 3
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
 
-	val empty = empty String.compare
+	val empty = empty String.compare 
 	
 fun colorear (instrList : instr list) = 
 	let
@@ -16,11 +16,11 @@ fun colorear (instrList : instr list) =
 		
 		fun fillNatToInstr ([],_) = tabNueva()
 			| fillNatToInstr (x::xs,n) = tabInserta (n,x,fillNatToInstr (xs,n+1))
-		(* PARA CARGAR NATTOINSTR SE NECESITA LA LISTA DE INSTRUCCIONES*)
+			
 		val natToInstr = ref (fillNatToInstr(instrList,0)) : (int, tigerassem.instr) tigertab.Tabla ref	
 		
-		val longNatToInstr = List.length(tabAList(!natToInstr))
-		
+		val longNatToInstr = List.length(tabAList(!natToInstr)) - 1
+		val _ = print("Cantidad de instrucciones "^Int.toString(longNatToInstr)^"\n")
 		fun id x = x
 
 	(* ---------------------------------------------------------------------------------------------------------- *)
@@ -70,44 +70,71 @@ fun colorear (instrList : instr list) =
 										
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		
-		(* busca la clave x en t y retorna el valor asociado*)
+		(* busca la clave x en t y retorna el valor asociado
+		Si no encuentra el valor, falla. Debe ser únicamente utilizado cuando el valor está en la tabla*)
 		fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
 									NONE => raise Fail "error buscoEnTabla"
 									| SOME v => v)
 		(* dado un nodo retorna si es un MOVE o no*)							
-		fun isMove i = case buscoEnTabla (i,!natToInstr) of
-						MOVE {assem=a,dst=d,src=s} => true
+		fun isMove i = case tabBusca (i,!natToInstr) of
+						SOME (MOVE {assem=a,dst=d,src=s}) => true
 						| _ => false												
-														
-																							
-		fun forEachN (longNatToInstr,outNueva,outVieja,inNueva,inVieja) = (outNueva,outVieja,inNueva,inVieja)
+																																			
+		fun forEachN (0,outNueva,outVieja,inNueva,inVieja) = let
+															fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
+																						NONE => empty
+																						| SOME v => v)
+															fun buscoEnTablaInt (x,t) = (case (tabBusca (x,t)) of 
+																						NONE => Splayset.empty Int.compare
+																						| SOME v => v)
+															val b = buscoEnTabla (0,inVieja)
+															val in' = tabRInserta (0,b,inNueva)
+															
+															val b1 = buscoEnTabla (0,outVieja)
+															val out' = tabRInserta (0,b1,outNueva)													
+															
+															val useN = buscoEnTabla (0,!uses)										
+															val outN = buscoEnTabla (0,outVieja)							
+															
+															val defN = buscoEnTabla (0,!defs)
+																																			
+															val in'' = tabRInserta(0,union(useN,difference(outN,defN)),inNueva)
+															val succsN = listItems (buscoEnTablaInt (0,!succs))
+															fun index n = listItems (buscoEnTabla (0,in''))
+															val m = Splayset.addList(empty,List.concat (List.map index succsN))
+															val out'' = tabRInserta (0,m,in'')
+														in
+															(out',out'',in',in'')
+														end
 		| forEachN (n,outNueva,outVieja,inNueva,inVieja) = let
+															fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
+																						NONE => empty
+																						| SOME v => v)
+															fun buscoEnTablaInt (x,t) = (case (tabBusca (x,t)) of 
+																						NONE => Splayset.empty Int.compare
+																						| SOME v => v)
 															val b = buscoEnTabla (n,inVieja)
 															val in' = tabRInserta (n,b,inNueva)
 															
 															val b1 = buscoEnTabla (n,outVieja)
-															val out' = tabRInserta (n,b1,outNueva)														
+															val out' = tabRInserta (n,b1,outNueva)
 															
 															val useN = buscoEnTabla (n,!uses)										
-																														
 															val outN = buscoEnTabla (n,outVieja)							
 															
-															val defN = buscoEnTabla (n,!defs)																				
+															val defN = buscoEnTabla (n,!defs)
+																																			
 															val in'' = tabRInserta(n,union(useN,difference(outN,defN)),inNueva)
-															
-															val succsN = listItems (buscoEnTabla (n,!succs))
-															
+															val succsN = listItems (buscoEnTablaInt (n,!succs))
 															fun index n = listItems (buscoEnTabla (n,in''))
-															
 															val m = Splayset.addList(empty,List.concat (List.map index succsN))
-																		
 															val out'' = tabRInserta (n,m,in'')
 														in
-															forEachN (n+1, out',out'',in',in'')
+															forEachN (n-1, out',out'',in',in'')
 														end
 														
 		fun repeatUntil (outNueva,outVieja,inNueva,inVieja) = let 
-															val (outNueva',outVieja',inNueva',inVieja') = forEachN (0,outNueva,outVieja,inNueva,inVieja)
+															val (outNueva',outVieja',inNueva',inVieja') = forEachN (longNatToInstr,outNueva,outVieja,inNueva,inVieja)
 															val fin = tabIgual (Splayset.equal,outNueva,outNueva') andalso tabIgual (Splayset.equal,inNueva,inNueva')
 														in 
 															if fin then (outNueva',outVieja',inNueva',inVieja') else  repeatUntil(outNueva',outVieja',inNueva',inVieja')
@@ -123,7 +150,7 @@ fun colorear (instrList : instr list) =
 		fun referenciar (a,b,c,d) =(ref a, ref b, ref c, ref d)
 		
 		val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(longNatToInstr,(tabNueva(),tabNueva(),tabNueva(),tabNueva())))
-															
+			
 		(*******************************************************************************************************************************)
 		(* adj = interf ?*)
 		
@@ -166,7 +193,7 @@ fun colorear (instrList : instr list) =
 																	in
 																		ts
 																	end
-	(*******************************************************************************************************************************)
+	(******************************************************************************************************************************)
 		
 		
 		fun fillMoveRelated 0 = let
@@ -187,7 +214,6 @@ fun colorear (instrList : instr list) =
 		val moveRelated = ref (fillMoveRelated longNatToInstr)
 		
 		fun isMoveRelated t = member (!moveRelated,t)
-		
 	(*******************************************************************************************************************************)								
 		fun fillInterf (0,tab) = let
 									val i = buscoEnTabla (0, !natToInstr)
@@ -212,7 +238,7 @@ fun colorear (instrList : instr list) =
 											| MOVE {assem=_,dst=d,src=_} => 
 												let
 													val g = (fn (tmp,t) => tabInserta (tmp,Splayset.add(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
-													val liveouts' = delete (liveouts,d) (* todos los liveouts menos el destino*)
+													val liveouts' =  if member(liveouts,d) then delete (liveouts,d) else liveouts (* todos los liveouts menos el destino*)
 													val tab' = f(d,tab)
 													val liveoutsList = Splayset.listItems liveouts'				
 													val tab'' = List.foldl g tab' liveoutsList
@@ -241,7 +267,7 @@ fun colorear (instrList : instr list) =
 											| MOVE {assem=_,dst=d,src=_} =>
 												let
 													val g = (fn (tmp,t) => tabInserta (tmp,Splayset.add(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
-													val liveouts' = delete (liveouts,d) (* todos los liveouts menos el destino*)
+													val liveouts' = if member(liveouts,d) then delete (liveouts,d) else liveouts (* todos los liveouts menos el destino*)
 													val tab' = f(d,tab)
 													val liveoutsList = Splayset.listItems liveouts'				
 													val tab'' = List.foldl g tab' liveoutsList
@@ -249,7 +275,6 @@ fun colorear (instrList : instr list) =
 								end		
 		
 		val interf = ref(fillInterf(longNatToInstr,tabNueva()))
-		
 		(* Que pasa con el grado igual a K? 
 		   Suponemos que debe estar incluído con el conjunto high*)
 
@@ -273,6 +298,6 @@ fun colorear (instrList : instr list) =
 												  
 	(* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
 
-	in print("ok") end	 
+	in print("ok\n") end	 
 
 end
