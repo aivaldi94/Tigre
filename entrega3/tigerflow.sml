@@ -96,23 +96,23 @@ fun colorear (instrList : instr list) =
 																						NONE => Splayset.empty Int.compare
 																						| SOME v => v)
 															val b = buscoEnTabla (0,inVieja)
-															val in' = tabRInserta (0,b,inNueva)
+															val inNueva' = tabRInserta (0,b,inNueva)
 															
 															val b1 = buscoEnTabla (0,outVieja)
-															val out' = tabRInserta (0,b1,outNueva)													
+															val outNueva' = tabRInserta (0,b1,outNueva)
 															
 															val useN = buscoEnTabla (0,!uses)										
-															val outN = buscoEnTabla (0,outVieja)							
+															val outN = buscoEnTabla (0,outVieja)									
+															val defN = buscoEnTabla (0,!defs)									
+															val inVieja' = tabRInserta(0,union(useN,difference(outN,defN)),inVieja)
 															
-															val defN = buscoEnTabla (0,!defs)
-																																			
-															val in'' = tabRInserta(0,union(useN,difference(outN,defN)),inNueva)
 															val succsN = listItems (buscoEnTablaInt (0,!succs))
-															fun index n = listItems (buscoEnTabla (0,in''))
+															fun index n = listItems (buscoEnTabla (0,inVieja'))
+															
 															val m = Splayset.addList(empty,List.concat (List.map index succsN))
-															val out'' = tabRInserta (0,m,in'')
+															val outVieja' = tabRInserta (0,m,outVieja)
 														in
-															(out',out'',in',in'')
+															(outNueva',outVieja',inNueva',inVieja')
 														end
 		| forEachN (n,outNueva,outVieja,inNueva,inVieja) = let
 															fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
@@ -122,23 +122,23 @@ fun colorear (instrList : instr list) =
 																						NONE => Splayset.empty Int.compare
 																						| SOME v => v)
 															val b = buscoEnTabla (n,inVieja)
-															val in' = tabRInserta (n,b,inNueva)
+															val inNueva' = tabRInserta (n,b,inNueva)
 															
 															val b1 = buscoEnTabla (n,outVieja)
-															val out' = tabRInserta (n,b1,outNueva)
+															val outNueva' = tabRInserta (n,b1,outNueva)
 															
 															val useN = buscoEnTabla (n,!uses)										
-															val outN = buscoEnTabla (n,outVieja)							
+															val outN = buscoEnTabla (n,outVieja)									
+															val defN = buscoEnTabla (n,!defs)									
+															val inVieja' = tabRInserta(n,union(useN,difference(outN,defN)),inVieja)
 															
-															val defN = buscoEnTabla (n,!defs)
-																																			
-															val in'' = tabRInserta(n,union(useN,difference(outN,defN)),inNueva)
 															val succsN = listItems (buscoEnTablaInt (n,!succs))
-															fun index n = listItems (buscoEnTabla (n,in''))
+															fun index n = listItems (buscoEnTabla (n,inVieja'))
+															
 															val m = Splayset.addList(empty,List.concat (List.map index succsN))
-															val out'' = tabRInserta (n,m,in'')
+															val outVieja' = tabRInserta (n,m,outVieja)
 														in
-															forEachN (n-1, out',out'',in',in'')
+															forEachN (n-1, outNueva',outVieja',inNueva',inVieja')
 														end
 														
 		fun repeatUntil (outNueva,outVieja,inNueva,inVieja) = let 
