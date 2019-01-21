@@ -88,31 +88,27 @@ fun concatStrings [] = " "
 	|concatStrings (x::xs) = " "^x^concatStrings(xs)
 								
 fun tabPrintIntInstr t = let 
-							val l = tabAList t
-							fun getAsmInstr i = case i of 
-													tigerassem.OPER {assem=a,dst=_,src=_,jump=_} => a
-													| tigerassem.LABEL {assem=a,lab=_} => a
-													| tigerassem.MOVE {assem=a,dst=_,src=_} => a
-							val _ = print("\nTipo : (int * instr) Tabla\n")
-							val _ = List.app (fn (n,i) => print (its(n)^" -> "^getAsmInstr i^"\n")) l
+							val l = tabAList t														
+							val _ = print("\nTipo : (int * instr) Tabla\n\n")
+							val _ = List.app (fn (n,i) => print (its(n)^" -> "^tigerassem.format name i^"\n")) l
 						in () end
 
 
 fun tabPrintIntTempSet t = let
 							val l = tabAList t														
-							val _ = print ("\nTipo : (int * temp Set) Tabla\n")
+							val _ = print ("\nTipo : (int * temp Set) Tabla\n\n")
 							val _ = List.app (fn (n,set) => print (its(n)^" -> {"^(concatStrings(Splayset.listItems set))^"}\n")) l
 						 in () end
 					 
 fun tabPrintIntIntSet t = let
 							val l = tabAList t
-							val _ = print ("\nTipo:(int * int Set) Tabla\n")
+							val _ = print ("\nTipo:(int * int Set) Tabla\n\n")
 							val _ = List.app (fn (n,set) => print (its(n)^" -> {"^(concatStrings(List.map its (Splayset.listItems set)))^"}\n")) l
 						 in () end
 						 
 fun tabPrintTempTempSet t = let 
 							val l = tabAList t														
-							val _ = print ("\nTipo : (temp * temp Set) Tabla\n")
+							val _ = print ("\nTipo : (temp * temp Set) Tabla\n\n")
 							val _ = List.app (fn (t,set) => print (t^" -> {"^(concatStrings(Splayset.listItems set))^"}\n")) l
 						 in () end														
 						 
