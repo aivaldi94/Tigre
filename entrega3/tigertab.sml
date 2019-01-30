@@ -108,7 +108,7 @@ fun tabPrintIntIntSet t = let
 						 
 fun tabPrintTempTempSet t = let 
 							val l = tabAList t														
-							val _ = print ("\nTipo : (temp * temp Set) Tabla\n\n")
+							(*val _ = print ("\nTipo : (temp * temp Set) Tabla\n\n")*)
 							val _ = List.app (fn (t,set) => print (t^" -> {"^(concatStrings(Splayset.listItems set))^"}\n")) l
 						 in () end														
 						 
