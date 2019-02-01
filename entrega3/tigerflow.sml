@@ -230,38 +230,10 @@ fun colorear (instrList : instr list) =
 		fun isMoveRelated t = member (!moveRelated,t)
 	(*******************************************************************************************************************************)								
 
-		fun fillInterf (0,tab) = let
-									val i = buscoEnTabla (0, !natToInstr)
-									fun findSet (t : temp) = (case tabBusca (t,tab) of
-																	NONE => empty
-																	| SOME c => c)
-									val liveouts = buscoEnTabla(0,!liveOut)
-									(* f inserta en la tabla la tupla (tmp, A union B)
-									donde A son todos los nodos n donde ya existe la arista (tmp,n)
-									B son todos los liveouts en la instrucción donde se define tmp*)
-									fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts),t)) 
-									in case i of
-											OPER {assem=_,dst=d,src=_,jump=_} => 
-												if List.null(d) then (print("0 "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");tab) else (let 
-													val g = (fn (tmp,t) => tabInserta (tmp,Splayset.addList(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
-													(* tab' tiene todos las aristas que comienzan con di*)
-													val tab' = List.foldl f tab d													
-													val liveoutsList = Splayset.listItems liveouts				
-													val tab'' = List.foldl g tab' liveoutsList													
-												in (print("0 "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");tab'') end)
-											| LABEL {assem=_,lab=_} => (print("0 "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");tab)
-											| MOVE {assem=_,dst=d,src=_} => 
-												let
-													val g = (fn (tmp,t) => tabInserta (tmp,Splayset.add(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
-													val liveouts' =  if member(liveouts,d) then delete (liveouts,d) else liveouts (* todos los liveouts menos el destino*)
-													val tab' = f(d,tab)													
-													val liveoutsList = Splayset.listItems liveouts'				
-													val tab'' = List.foldl g tab' liveoutsList																
-												in (print("0 "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");tab'') end
-								end								
+		fun fillInterf (~1,tab) = tab							
 			| fillInterf (n,tab) = let
 									val i = buscoEnTabla (n, !natToInstr)
-									fun findSet (t : temp) = (case tabBusca (t,tab) of
+									fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
 																	NONE => empty
 																	| SOME c => c)
 									val liveouts = buscoEnTabla(n,!liveOut)
@@ -273,24 +245,26 @@ fun colorear (instrList : instr list) =
 												if List.null(d) then (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");fillInterf(n-1,tab)) else (let 
 													val dSet = Splayset.addList(empty, d)
 													val liveouts' = difference (liveouts,dSet)
-													val g = (fn (tmp,t) => tabInserta (tmp,Splayset.union(findSet(tmp),dSet),t)) : (temp * interfTab) -> interfTab
-													fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts'),t))													
-													(* tab' tiene todos las aristas que comienzan con di*)
+													val _ = print(Int.toString(numItems(liveouts'))^"\n")
+													fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t))	(* tab' tiene todos las aristas que comienzan con di*)
 													val tab' = List.foldl f tab d
-													val liveoutsList = Splayset.listItems liveouts'				
+													val g = (fn (tmp,t) => tabRInserta (tmp,Splayset.union(findSet(tmp,tab'),dSet),t)) : (temp * interfTab) -> interfTab
+													val liveoutsList = Splayset.listItems liveouts'	
+													val _ = print(Int.toString(numItems(dSet))^"\n")			
 													val tab'' = List.foldl g tab' liveoutsList
 													(*quede en el numero de nodo 20, por que no agrega a t2 el t8?*)
 												in (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");fillInterf(n-1,tab'')) end)
 												
 											| LABEL {assem=a,lab=_} => (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");fillInterf(n-1,tab))
 											
-											| MOVE {assem=a,dst=d,src=_} =>
+											| MOVE {assem=a,dst=d,src=s} =>
 												let
-													val g = (fn (tmp,t) => tabInserta (tmp,Splayset.add(findSet(tmp),d),t)) : (temp * interfTab) -> interfTab
-													val liveouts' = if member(liveouts,d) then delete (liveouts,d) else liveouts (* todos los liveouts menos el destino*)
-													fun f' ((tmp, t) : (temp * interfTab)) : interfTab = (tabInserta (tmp,union(findSet(tmp),liveouts'),t)) 
-													val tab' = f'(d,tab)													
-													val liveoutsList = Splayset.listItems liveouts'				
+													val dSet = Splayset.addList(empty, [s,d])
+													val liveouts' = difference (liveouts,dSet)
+													(*val liveouts' = if member(liveouts,s) then delete (liveouts,s) else liveouts  todos los liveouts menos el destino y la fuente*)
+													fun f' ((tmp, t) : (temp * interfTab)) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t)) 
+													val tab' = f'(d,tab)		
+													val g = (fn (tmp,t) => tabRInserta (tmp,Splayset.add(findSet(tmp,tab'),d),t)) : (temp * interfTab) -> interfTab	val liveoutsList = Splayset.listItems liveouts'				
 													val tab'' = List.foldl g tab' liveoutsList												
 												in (print(Int.toString(n)^" MOVE"^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");fillInterf(n-1,tab'')) end
 								end		
