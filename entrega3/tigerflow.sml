@@ -275,26 +275,58 @@ fun colorear (instrList : instr list) =
 		(* Que pasa con el grado igual a K? 
 		   Suponemos que debe estar incluído con el conjunto high*)
 
-	(* simplifyWorklist: nodos no relacionados con move y de grado menor a K *)
-
-		fun getSimplifyList (tDegree, tMoveRel) = let
+	val setOfAllTemps = addList (empty, tabClaves (!degree))
+	(* simplifyWorklist: tigertemp.temp Splayset.set - nodos no relacionados con move y de grado menor a K *)
+		
+		fun fillSimplifyWorkSet (tDegree, tMoveRel) = let
 													val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
-													val nonMoveRelList = tabClaves (tabFiltra ((fn n => if n = false then true else false),!tMoveRel))
-												  in addList (empty,(lowDegreeList @ nonMoveRelList)) end
+													val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)
+												  in addList (nonMoveRelSet,lowDegreeList) end
+		val simplifyWorkSet = fillSimplifyWorkSet (degree, moveRelated)
 
-	(* freezeWorklist: nodos relacionados con move y de grado menor a K *)
+	(* freezeWorklist: tigertemp.temp Splayset.set - nodos relacionados con move y de grado menor a K *)
 
-	   fun getFreezeList (tDegree, tMoveRel) = let 
+	   fun freezeWorkSet (tDegree, tMoveRel) = let 
 													val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
-													val moveRelList = tabClaves (tabFiltra ((fn n => if n = false then false else true),!tMoveRel))
-												  in addList (empty,(lowDegreeList @ moveRelList)) end
+													val moveRelSet = !tMoveRel
+												  in addList (moveRelSet,lowDegreeList) end
+												  
 												
-	(* spillWorklist: nodos con grado mayor a K *)
+	(* spillWorklist: tigertemp.temp Splayset.set - nodos con grado mayor a K *)
 												
-		val spillWorkList = addList (empty,tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree)))						
+		val spillWorkSet = addList (empty,tabClaves (tabFiltra ((fn n => if n > K then true else false),!degree)))						
 												  
 	(* Hacer lista worklistMoves: moves de temp a temp que pueden eliminarse (o sea que dst y src no tienen que estar unidos en interf).*)
+	(* me conviene que esto sea un conjunto de tuplas? o sea si (a,b) pertenece a este conjunto quiere decir que a y b pueden unirse
+		en un solo nodo porque a y b no estan unidos en interf *)
+		fun fillSpillWorkSet 0 = let
+									val i = buscoEnTabla (0, !natToInstr)
+								in case i of
+									OPER {assem=_,dst=_,src=_,jump=_} => []
+									| LABEL {assem=_,lab=_} => []
+									| MOVE {assem=_,dst=d,src=s} => if member (buscoEnTabla(s,!interf),d) then [] else [(d,s)]
+								end				
+		  | fillSpillWorkSet n = let
+									val i = buscoEnTabla (n, !natToInstr)
+								in case i of
+									OPER {assem=_,dst=_,src=_,jump=_} => fillSpillWorkSet (n-1)
+									| LABEL {assem=_,lab=_} => fillSpillWorkSet (n-1)
+									| MOVE {assem=_,dst=d,src=s} => if member (buscoEnTabla(s,!interf),d) then fillSpillWorkSet (n-1) else (fillSpillWorkSet (n-1) @ [(d,s)])
+								end																		
+														
+		val spillWorkSet = ref (fillSpillWorkSet longNatToInstr)
+		
+	(* selectStack: pila que contiene los temporales eliminados del grafo *)
+	val selectStack = []
+	(* Simplify algoritmo en pagina 246 *)
+	fun Simplify () = let
+						val n = hd(listItems (simplifyWorkSet))
+						val simplifyWorkList = difference (simplifyWorkSet,addList(empty,[n]))						
+						(*bajar en uno grado de todos los adjacentes a n*)
+						val _ = selectStack @ [n]
+					 in () end
 
 	in print("ok\n") end	 
 
 end
+
