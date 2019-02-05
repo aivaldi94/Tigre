@@ -224,7 +224,6 @@ struct
 													val liveoutsList = Splayset.listItems liveouts'	
 													val _ = print(Int.toString(numItems(dSet))^"\n")			
 													val tab'' = List.foldl g tab' liveoutsList
-													(*quede en el numero de nodo 20, por que no agrega a t2 el t8?*)
 												in (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");fillInterf(n-1,tab'')) end)
 												
 											| LABEL {assem=a,lab=_} => (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");fillInterf(n-1,tab))

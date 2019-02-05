@@ -63,8 +63,16 @@ struct
 			
 		(* selectStack: pila que contiene los temporales eliminados del grafo *)
 		val selectStack = ref ([])
-		
+		(* moves que todavia no estan listos para unirse*)
+		val activeMoves = empty
+		(*
+		(*moveList: tabla que asocia a cada temp con el conjunto de temps mediante los cuales esta relaiconado con un move*)
+		fun fillMoveList 0 = empty
+		val moveList = ref (fillMoveList (!longNatToInstr))
+		(*funcion noveMoves*)
+		fun nodeMoves n = intersection(buscoEnTabla(n,!moveList),union(activeMoves,WorkSetMoves))
 		(* Simplify algoritmo en pagina 246 *)
+		*)
 		fun minusOneSet s x = x-1 
 														
 		fun decrementDegree (s) = let 								
