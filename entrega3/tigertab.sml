@@ -79,7 +79,12 @@ fun tabPrimer(f, t) = hd(List.filter (fn(a, b) => f b) (listItems t))
 
 fun tabClaves t = List.map (fn(x, y) => x) (listItems t)
 
-
+(* busca la clave x en t y retorna el valor asociado
+		Si no encuentra el valor, falla. Debe ser únicamente utilizado cuando el valor está en la tabla*)
+fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
+							NONE => raise Fail "error buscoEnTabla"
+							| SOME v => v)
+							
 (*----------------------------------------------------------------------------------------------*)
 
 val its = Int.toString

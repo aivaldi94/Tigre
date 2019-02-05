@@ -4,7 +4,7 @@ open tigerescap
 open tigerseman
 open tigermunch
 open tigersimpleregalloc
-open tigerflow
+open tigerbuild
 open BasicIO Nonstdio
 
 fun lexstream(is: instream) =
@@ -140,7 +140,7 @@ fun main(args) =
 								  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 								  val l2 = List.concat (map (fn (f,il) => il) l1)
 								  val l3 = map (fn i => tigerassem.format id i) l2
-								  val _ = tigerflow.colorear (l2)
+								  val _ = tigerbuild.build (l2,1)
 								 in () end) else () 
 		
 		in 
