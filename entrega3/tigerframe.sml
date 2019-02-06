@@ -49,6 +49,7 @@ val specialregs = [rv, fp, sp]
 val argregs = []
 val callersaves = []
 val calleesaves = ["rbx", fp, sp, "r10", "r11", "r12", "r13", "r14", "r15"]
+val registers = [rv,"rb",rcx,rdx,rsi,rdi,fp,sp,r8,r9,"r10","r11","r12","r13","r14","r15"]
 
 fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 

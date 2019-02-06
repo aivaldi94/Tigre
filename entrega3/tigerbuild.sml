@@ -5,7 +5,7 @@ struct
 	open tigertab
 	open Splayset
 
-	val K = 3
+	val K = 16 (* #tigerframe.registers*)
 	fun name x = x
 	fun id x = x
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla

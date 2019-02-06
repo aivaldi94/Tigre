@@ -10,27 +10,31 @@ struct
 	
 	fun colorear () = 
 	let
+		val _ = print ("En tigercolor\n")
 	
+	(*
 		fun areAdj (t1,t2) = case (tabBusca (t1,!interf)) of
 								NONE => raise Fail "No deberia pasar (temp no encontrado)"
 								| SOME l => List.null (List.filter (fn e => ((e <= t2) andalso (e >= t2))) (Splayset.listItems l))	
-			
+		*)	
 		fun getDegree t = Splayset.numItems (buscoEnTabla t)
 			
 		val degree = ref (tabAAplica (id,Splayset.numItems,!interf))	
-			
+			(*
 		val setOfAllTemps = addList (empty, tabClaves (!degree))
 		
 		(* simplifyWorklist: tigertemp.temp Splayset.set - nodos no relacionados con move y de grado menor a K *)
-			
+			*)
 		fun fillSimplifyWorkSet (tDegree, tMoveRel) = let
 														val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
-														val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)
-													  in addList (nonMoveRelSet,lowDegreeList) end
+														(*val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)*)
+													  (* agregar para coalese y spill in addList (nonMoveRelSet,lowDegreeList) end*)
+													  in addList (empty,lowDegreeList) end
+													  
 		val simplifyWorkSet = ref (fillSimplifyWorkSet (degree, moveRelated))
-
+val _ = print ("Llena simplfy\n")
 		(* freezeWorklist: tigertemp.temp Splayset.set - nodos relacionados con move y de grado menor a K *)
-
+(*
 		fun fillFreezeWorkSet (tDegree, tMoveRel) = let 
 														val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
 														val moveRelSet = !tMoveRel
@@ -60,9 +64,9 @@ struct
 								end																		
 															
 		val WorkSetMoves = ref (fillWorkSetMoves (!longNatToInstr))
-			
+*)			
 		(* selectStack: pila que contiene los temporales eliminados del grafo *)
-		val selectStack = ref ([])
+		val selectStack = ref ([]) : tigertemp.temp list ref
 		(* moves que todavia no estan listos para unirse*)
 		val activeMoves = empty
 		(*
@@ -79,34 +83,36 @@ struct
 									(* paso a lista el conjunto de temporales*)
 									val listTemps = listItems s
 									(* me quedo con los temps de la lista cuyo grado es K *)
+									(*
 									val setKNeig = (Splayset.addList (empty, (listTemps @ tabClaves(tabFiltra (fn n => n = K,!degree))))) : tigertemp.temp Splayset.set
+									*)
+									val listKNeig = List.filter (fn n => (buscoEnTabla(n,!degree)) = K) listTemps
 									(* a cada temp de la lista original le resto un vecino *)
+									
 									fun minusOne n = case tabBusca(n,!degree) of
 														NONE => raise Fail "No deberia pasar minusOne"
 														| SOME i => i-1
 									val _ = map (fn n => tabRInserta (n,minusOne n,!degree)) listTemps
 									(*elimino del conjunto spillWorkSet los elementos del conjunto listKNeig*)
-									val _ = spillWorkSet := difference (!spillWorkSet,setKNeig)
+									(*val _ = spillWorkSet := difference (!spillWorkSet,setKNeig)*)
 									(*llamo a la funcion*)
 									(*val _ = enableMoves (setKNeig)*)
 									(* para cada temp del conjunto evaluo lo que hace aux *)
+									(*
 									fun aux n = if isMoveRelated n then freezeWorkSet := add (!freezeWorkSet,n)
 																   else simplifyWorkSet := add (!simplifyWorkSet,n)
 									val _ = Splayset.app aux setKNeig
-									in () end 
+									*)
+									in addList(empty,listKNeig) end 
 									
-		fun Simplify () = let
-							(* obtengo un elemento del conjunto simplifyWorkList, lo llamo N*) 
-							val n = hd(listItems (!simplifyWorkSet))
-							(* elimino N del conjunto simplifyWorkList *)						
-							val _ = simplifyWorkSet := difference (!simplifyWorkSet,addList(empty,[n]))
-							(* pongo N en el stack de temps seleccionados *) 						
-							val _ = selectStack := !selectStack @ [n]	
-							(* obtengo los temps adyacentes N *)											
-							val adjN = buscoEnTabla (n,!interf)
-							(* llamo a la funcion decrementDegree pasando como argumento los adyacentes a N *)
-						 in (decrementDegree (adjN);()) end
-
-	in print("ok\n") end	 
+		fun Simplify (sws) = case (numItems(sws)) of 
+									0 => List.app (fn n => print (n^"\n")) (!selectStack)
+									| _ => ( let val n = hd(listItems (sws))											
+												val _ = selectStack := !selectStack @ [n]				
+												val adjN = buscoEnTabla (n,!interf)
+												val setK = decrementDegree (adjN)							
+												in  Simplify (difference (union(sws,setK),addList(empty,[n]))) end)
+						 		 				
+	in Simplify(!simplifyWorkSet) end	 
 end
 

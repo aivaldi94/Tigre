@@ -141,6 +141,7 @@ fun main(args) =
 								  val l2 = List.concat (map (fn (f,il) => il) l1)
 								  val l3 = map (fn i => tigerassem.format id i) l2
 								  val _ = tigerbuild.build (l2,1)
+								  val _ = tigercolor.colorear()
 								 in () end) else () 
 		
 		in 
