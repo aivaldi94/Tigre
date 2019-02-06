@@ -117,4 +117,10 @@ fun tabPrintTempTempSet t = let
 							val _ = List.app (fn (t,set) => print (t^" -> {"^(concatStrings(Splayset.listItems set))^"}\n")) l
 						 in () end														
 						 
+fun tabPrintTempTemp t = let 
+							val l = tabAList t																					
+							val _ = List.app (fn (t,temp) => print (t^" -> "^t^"\n")) l
+						 in () end	
+
+
 end
