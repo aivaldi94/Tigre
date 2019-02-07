@@ -20,7 +20,7 @@ val fillInterf : int * (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Ta
 val worklistMoves : int Splayset.set
 
 *)
-val colorear : unit -> unit
+val colorear : unit -> (tigertemp.temp -> tigertemp.temp)
 
 end
 	

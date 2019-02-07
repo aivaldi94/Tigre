@@ -6,6 +6,7 @@ open tigermunch
 open tigersimpleregalloc
 open tigerbuild
 open BasicIO Nonstdio
+open tigercolor
 
 fun lexstream(is: instream) =
 	Lexing.createLexer(fn b => fn n => buff_input is b 0 n);
@@ -139,9 +140,9 @@ fun main(args) =
 		val _ = if colored then (let
 								  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 								  val l2 = List.concat (map (fn (f,il) => il) l1)
-								  val l3 = map (fn i => tigerassem.format id i) l2
 								  val _ = tigerbuild.build (l2,1)
-								  val _ = tigercolor.colorear()
+								  val pintar = tigercolor.colorear()
+								  val l3 = map (fn i => tigerassem.format pintar i) l2
 								 in () end) else () 
 		
 		in 

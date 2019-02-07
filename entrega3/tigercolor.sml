@@ -32,7 +32,7 @@ struct
 													  in addList (empty,lowDegreeList) end
 													  
 		val simplifyWorkSet = ref (fillSimplifyWorkSet (degree, moveRelated))
-val _ = print ("Llena simplfy\n")
+		val _ = print ("Llena simplfy\n")
 		(* freezeWorklist: tigertemp.temp Splayset.set - nodos relacionados con move y de grado menor a K *)
 (*
 		fun fillFreezeWorkSet (tDegree, tMoveRel) = let 
@@ -139,8 +139,12 @@ val _ = print ("Llena simplfy\n")
 												val cNodes' = union (cNodes, add(empty, n))
 											in AssignColors (cNodes', stack') end)
 										| true => AssignColors (cNodes, tl(stack))
-											
-																																																		 		 				
-	in (Simplify(!simplifyWorkSet);AssignColors(coloredNodes, !selectStack)) end	 
+										
+		val _ =  (Simplify(!simplifyWorkSet);AssignColors(coloredNodes, !selectStack))
+		
+		fun pintar n = (case tabBusca(n,!color) of
+												NONE => raise Fail "Temporal sin color asignado"
+												| SOME c => c) 							 		 				
+	in pintar end	 
 end
 
