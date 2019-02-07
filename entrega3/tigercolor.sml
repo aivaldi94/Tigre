@@ -112,25 +112,33 @@ val _ = print ("Llena simplfy\n")
 												val adjN = buscoEnTabla (n,!interf)
 												val setK = decrementDegree (adjN)							
 												in  Simplify (difference (union(sws,setK),addList(empty,[n]))) end)
-												
-		val precolored = addList(empty,["rdi", "rsi", "rdx", "rcx", "r8", "r9", "fp", "rv"])
-		val color = ref (tabNueva()) : (tigertemp.temp ,tigertemp.temp) tigertab.Tabla ref
+		
+		val precoloredList = ["rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax"]								
+		val precolored = addList(empty, precoloredList)
 		val coloredNodes = empty
 		val registers = addList(empty,["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]) : tigertemp.temp Splayset.set
-												
+
+		fun fillColor [] = tabNueva()
+		  | fillColor (x::xs) = tabRInserta(x,x,(fillColor xs))
+		 val color = ref (fillColor(precoloredList)) : (tigertemp.temp ,tigertemp.temp) tigertab.Tabla ref 												
+		  												
+		  												
 		fun AssignColors (cNodes, stack) = case (length (stack)) of
 									
 									0 => (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))
-									| _ => let 
-											val n = hd (stack)
-											val stack' = tl(stack)
-											val adj = buscoEnTabla (n,!interf) : tigertemp.temp Splayset.set
-											val uni = union (cNodes, precolored) : tigertemp.temp Splayset.set
-											val okColors = Splayset.foldl (fn (n : tigertemp.temp,s) => if member (uni,n) then difference (s,add(empty,buscoEnTabla(n,!color))) else s) registers adj
-											val c = if length (listItems(okColors)) = 0 then raise Fail "lista vacia en assig colors" else hd(listItems(okColors))
-											val _ = color := tabRInserta (n,c,!color)
-											val cNodes' = union (cNodes, add(empty, n))
-											in AssignColors (cNodes', stack') end
+									| _ => case (member(precolored,hd (stack))) of
+										false =>
+											(let 
+												val n = hd (stack)
+												val stack' = tl(stack)
+												val adj = buscoEnTabla (n,!interf) : tigertemp.temp Splayset.set
+												val uni = union (cNodes, precolored) : tigertemp.temp Splayset.set
+												val okColors = Splayset.foldl (fn (n : tigertemp.temp,s) => if member (uni,n) then difference (s,add(empty,buscoEnTabla(n,!color))) else s) registers adj
+												val c = if length (listItems(okColors)) = 0 then raise Fail "lista vacia en assig colors" else hd(listItems(okColors))
+												val _ = color := tabRInserta (n,c,!color)
+												val cNodes' = union (cNodes, add(empty, n))
+											in AssignColors (cNodes', stack') end)
+										| true => AssignColors (cNodes, tl(stack))
 											
 																																																		 		 				
 	in (Simplify(!simplifyWorkSet);AssignColors(coloredNodes, !selectStack)) end	 
