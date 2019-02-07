@@ -1,18 +1,18 @@
 .section	.rodata
 
 .align 16
-.type L3, @object
-.size L3, 16
-L3:
-	.quad 2
-	.ascii "OK"
+.type L8, @object
+.size L8, 16
+L8:
+	.quad 18
+	.ascii "Reinas de la noche"
 
 .align 16
-.type L4, @object
-.size L4, 16
-L4:
-	.quad 4
-	.ascii "NOOK"
+.type L9, @object
+.size L9, 16
+L9:
+	.quad 6
+	.ascii "Burras"
 
 .section	.text.startup,"ax",@progbits
 
@@ -24,7 +24,7 @@ L0:
 	subq $1024, %rsp
 
 
-	L11:
+	L16:
 
 	movq %rbp, %r10
 
@@ -36,91 +36,53 @@ L0:
 
 	movq %rsi, %r10
 
-	movq %rdx, %r10
-
-	movq %rcx, %r10
-
-	movq %r8, %r10
-
-	movq %r9, %r10
-
-	movq 16(%rbp), %r10
-
-	movq %r10, %r10
-
-	movq 24(%rbp), %r10
-
-	movq %r10, %r10
-
-	movq 32(%rbp), %r10
-
-	movq %r10, %r11
-
-	movq 40(%rbp), %r10
-
-	movq %r10, %r10
-
-	movq %r11, %rax
-
-	jmp L10
-
-	L10:
-
-	L9:
-
-	movq $15, %r10
-
-	movq %rbp, %rdi
-
-	movq $2, %rsi
-
-	movq $3, %rdx
-
-	movq $4, %rcx
-
-	movq $5, %r8
-
-	movq $6, %r9
-
-	pushq $10
-
-	pushq $9
-
-	pushq $8
-
-	pushq $7
-
-	call L0
-
-	movq %rax, %r10
-
-	movq $9, %r11
+	movq $0, %r11
 
 	cmpq %r11, %r10
 
-	je L5
+	je L3
 
-	L6:
+	L4:
 
-	movq $L4, %rdi
+	movq %r10, %r13
 
-	call print
+	movq %rbp, %r11
 
-	L7:
+	movq $-8, %r12
 
-	movq $0, %rax
+	addq %r12, %r11
 
-	jmp L8
+	movq (%r11), %rdi
+
+	movq %r10, %rsi
+
+	movq $1, %r10
+
+	subq %r10, %rsi
+
+	call L0
+
+	movq %rax, %r11
+
+	movq %r13, %r10
+
+	imul %r11, %r10
+
+	movq %r10, %r10
 
 	L5:
 
-	movq $L3, %rdi
+	movq %r10, %rax
 
-	call print
+	jmp L15
 
-	jmp L7
+	L3:
 
-	L8:
+	movq $1, %r10
+
+	jmp L5
+
+	L15:
 
 
 
@@ -136,103 +98,43 @@ _tigermain:
 	subq $1024, %rsp
 
 
-	L11:
-
-	movq %rbp, %r10
-
-	movq $-8, %r11
-
-	addq %r11, %r10
-
-	movq %rdi, (%r10)
-
-	movq %rsi, %r10
-
-	movq %rdx, %r10
-
-	movq %rcx, %r10
-
-	movq %r8, %r10
-
-	movq %r9, %r10
-
-	movq 16(%rbp), %r10
-
-	movq %r10, %r10
-
-	movq 24(%rbp), %r10
-
-	movq %r10, %r10
-
-	movq 32(%rbp), %r10
-
-	movq %r10, %r11
-
-	movq 40(%rbp), %r10
-
-	movq %r10, %r10
-
-	movq %r11, %rax
-
-	jmp L10
-
-	L10:
-
-	L9:
-
-	movq $15, %r10
+	L14:
 
 	movq %rbp, %rdi
 
-	movq $2, %rsi
-
-	movq $3, %rdx
-
-	movq $4, %rcx
-
-	movq $5, %r8
-
-	movq $6, %r9
-
-	pushq $10
-
-	pushq $9
-
-	pushq $8
-
-	pushq $7
+	movq $4, %rsi
 
 	call L0
 
-	movq %rax, %r10
+	movq %rax, %r11
 
-	movq $9, %r11
+	movq $24, %r10
 
-	cmpq %r11, %r10
+	cmpq %r10, %r11
 
-	je L5
+	je L10
 
-	L6:
+	L11:
 
-	movq $L4, %rdi
+	movq $L9, %rdi
 
 	call print
 
-	L7:
+	L12:
 
 	movq $0, %rax
 
-	jmp L8
+	jmp L13
 
-	L5:
+	L10:
 
-	movq $L3, %rdi
+	movq $L8, %rdi
 
 	call print
 
-	jmp L7
+	jmp L12
 
-	L8:
+	L13:
 
 
 

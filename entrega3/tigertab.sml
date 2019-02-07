@@ -119,7 +119,7 @@ fun tabPrintTempTempSet t = let
 						 
 fun tabPrintTempTemp t = let 
 							val l = tabAList t																					
-							val _ = List.app (fn (t,temp) => print (t^" -> "^t^"\n")) l
+							val _ = List.app (fn (t,temp) => print (t^" -> "^temp^"\n")) l
 						 in () end	
 
 
