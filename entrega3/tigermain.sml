@@ -121,9 +121,16 @@ fun main(args) =
 							  val nFrame = tigerframe.name f
 							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $1024, %rsp\n\n"
 							  val epi = "\n\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n"
+							  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
+								 val l2 = List.concat (map (fn (f,il) => il) l1)
+								 val _ = tigerbuild.build (l2,1)
+								  val pintar = tigercolor.colorear()
+								  val l3 = map (fn i => tigerassem.format pintar i) l2
+							  (*
 							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)
 							  val l2 = (tigersimpleregalloc.simpleregalloc f l1) : tigerassem.instr list
 	   					          val l3 = map (fn i => tigerassem.format id i) l2
+							*)
 						     in prol^"\n"^concatInstr l3^"\n"^epi^(asmFunction xs) end
 								
 		(* opcion del debug -asm / escribe un archivo llamado prueba.s con el codigo assembler del programa *)
@@ -143,6 +150,7 @@ fun main(args) =
 								  val _ = tigerbuild.build (l2,1)
 								  val pintar = tigercolor.colorear()
 								  val l3 = map (fn i => tigerassem.format pintar i) l2
+								  
 								 in () end) else () 
 		
 		in 
