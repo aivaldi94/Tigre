@@ -23,6 +23,22 @@ struct
 	val interf = ref (tabNueva())
 	val moveRelated = ref empty
 	(*--------------*)
+
+	(* copiado de tigerframe ver cómo hacerlo *)
+	val fp = "rbp"				(* frame pointer *)
+	val sp = "rsp"				(* stack pointer *)
+	val rv = "rax"				(* return value  *)
+	val rdi ="rdi"
+	val rsi = "rsi"
+	val rdx = "rdx"
+	val rcx = "rcx"
+	val r8 = "r8"
+	val r9 = "r9"	
+	val callersaves = [rv,rcx,rdx,rsi,rdi,r8,r9]	
+	val calleesaves = ["rbx", fp, sp, "r10", "r11", "r12", "r13", "r14", "r15"]
+	val registers = [rv,"rbx",rcx,rdx,rsi,rdi,fp,sp,r8,r9,"r10","r11","r12","r13","r14","r15"]
+	(*--------------*)
+	
 	fun isMoveRelated t = member (!moveRelated,t)
 	
 	fun build (instrList : instr list,pFlag) = 
@@ -40,9 +56,12 @@ struct
 		val _ = if (pFlag = 1) then (print("Cantidad de instrucciones "^Int.toString(!longNatToInstr)^"\n\nImprimo natToInstr\n");tigertab.tabPrintIntInstr(!natToInstr)) else ()
 		
 	(* ---------------------------------------------------------------------------------------------------------- *)
+		(* Página 237:
+		the CALL instructions in the Assem language have been annotated to define (interfere with) all the caller-save registers*)
 		
-		fun fillDefs i = case i of 
-							OPER {assem=_,dst=d,src=_,jump=_} => addList (empty,d)
+		fun fillDefs i = case i of
+							OPER {assem=s,dst=d,src=_,jump=_} => let val  isCall = String.isSubstring "call" s
+																 in if isCall then addList (empty,callersaves) else addList (empty,d) end
 							| LABEL {assem=_,lab=_} => empty
 							| MOVE {assem=_,dst=d,src=_} => singleton String.compare d 
 								

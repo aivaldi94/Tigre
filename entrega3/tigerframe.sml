@@ -47,7 +47,7 @@ val localsGap = 8 			(* bytes *)
 val calldefs = [rv]
 val specialregs = [rv, fp, sp]
 val argregs = []
-val callersaves = []
+val callersaves = [rv,rcx,rdx,rsi,rdi,r8,r9]	
 val calleesaves = ["rbx", fp, sp, "r10", "r11", "r12", "r13", "r14", "r15"]
 val registers = [rv,"rbx",rcx,rdx,rsi,rdi,fp,sp,r8,r9,"r10","r11","r12","r13","r14","r15"]
 
