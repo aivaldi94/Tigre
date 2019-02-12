@@ -5,30 +5,30 @@ struct
 	open tigertab
 	open Splayset
 	open tigerbuild
+	open tigerframe
+
 	
 	val empty = empty String.compare														
 		
-	(* selectStack: pila que contiene los temporales eliminados del grafo *)
-	val selectStack = ref ([]) : tigertemp.temp list ref	
-	(* moves que todavia no estan listos para unirse*)
-	val activeMoves = empty	
+	
+	val selectStack = ref ([])	
 	val spillWorkSet = ref (empty)
 	val simplifyWorkSet = ref(empty)
 	val degree = ref (tabNueva())
 	val coloredNodes = empty
-	val registers = ref(empty): tigertemp.temp Splayset.set ref
 	val color = ref (tabNueva())
 	val precoloredList = ref([])
-	val precolored = ref(empty)
+	val precoloredSet = ref(empty)
 	val spilledNodes = ref ([])
+	val registersSet = ref(empty)
 	
-	fun getDegree t = Splayset.numItems (buscoEnTabla t)	
+	fun getDegree t = buscoEnTabla (t,!degree)
 		
-	fun fillSimplifyWorkSet (tDegree, tMoveRel) = let
-														val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),!tDegree))
-														(*val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)*)
-													  (* agregar para coalese y spill in addList (nonMoveRelSet,lowDegreeList) end*)
-													  in addList (empty,lowDegreeList) end
+	fun fillSimplifyWorkSet () = let
+									val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),(!degree)))
+									(*val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)*)
+									(* agregar para coalese y spill in addList (nonMoveRelSet,lowDegreeList) end*)
+								 in addList (empty,lowDegreeList) end
 													  
 	fun minusOneSet s x = x-1 
 														
@@ -57,20 +57,20 @@ struct
 								*)
 								in addList(empty,listKNeig) end 
 								
-	fun Simplify () = case (numItems(!simplifyWorkSet)) of 
+	fun simplify () = case (numItems(!simplifyWorkSet)) of 
 								0 => (print("stack:\n");List.app (fn n => print (n^"\n")) (!selectStack))
 								| _ => (let val n = hd(listItems (!simplifyWorkSet))											
 											val _ = selectStack := !selectStack @ [n]				
 											val adjN = buscoEnTabla (n,!interf)
 											val setK = decrementDegree (adjN)
 											val _ = simplifyWorkSet :=	difference (union(!simplifyWorkSet,setK),addList(empty,[n]))
-											in  Simplify () end)
+											in  simplify () end)
 	
 	
 
 
-	fun fillColor [] = tabNueva()
-	  | fillColor (x::xs) = tabRInserta(x,x,(fillColor xs))	
+	fun fillColor ([],c) = c
+	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
 	  												
 	fun selectSpill () = let
 							val m = hd(listItems (!spillWorkSet))
@@ -81,7 +81,7 @@ struct
 	fun repeatDo () = let
 						val lsws = numItems (!simplifyWorkSet)
 						val lspillws = numItems(!spillWorkSet)
-					   in if (lsws <> 0) then Simplify() else (if lspillws <> 0 then selectSpill() else ()) end
+					   in if (lsws <> 0) then simplify() else (if lspillws <> 0 then selectSpill() else ()) end
 					   
 	fun repeatUntil () = let
 							val lsws = numItems (!simplifyWorkSet)
@@ -89,17 +89,17 @@ struct
 							val fin = (lsws = 0) andalso (lspillws = 0)
 						  in if fin then () else repeatDo () end												
 													
-	fun AssignColors (cNodes, stack) = case (length (stack)) of
+	fun assignColors (cNodes, stack) = case (length (stack)) of
 								
 								0 => (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))
-								| _ => case (member(!precolored,hd (stack))) of
+								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
 										(let 
 											val n = hd (stack)
 											val stack' = tl(stack)
 											val adj = buscoEnTabla (n,!interf) : tigertemp.temp Splayset.set
-											val uni = union (cNodes, !precolored) : tigertemp.temp Splayset.set
-											val okColors = Splayset.foldl (fn (n : tigertemp.temp,s) => if member (uni,n) then difference (s,add(empty,buscoEnTabla(n,!color))) else s) (!registers) adj
+											val uni = union (cNodes, !precoloredSet) : tigertemp.temp Splayset.set
+											val okColors = Splayset.foldl (fn (n : tigertemp.temp,s) => if member (uni,n) then difference (s,add(empty,buscoEnTabla(n,!color))) else s) (!registersSet) adj
 											val cNodes' = case length (listItems(okColors)) of
 														0 => (let 
 																val _ = spilledNodes := n::(!spilledNodes)
@@ -108,10 +108,11 @@ struct
 																	val c = hd(listItems(okColors))
 																	val _ = color := tabRInserta (n,c,!color)					
 																in union (cNodes, add(empty, n)) end)
-										in AssignColors (cNodes', stack') end)
-									| true => AssignColors (cNodes, tl(stack))											
+										in assignColors (cNodes', stack') end)
+									| true => assignColors (cNodes, tl(stack))											
 
 	(* Tomará la lista de instrucciones, un temporal, un offset*)
+(*
 	fun rewriteProgram ([] : instr list, tmp : tigertemp.temp, offset : int) = ([],[]): (instr list * tigertemp.temp list)
 		| rewriteProgram (i::instr, tmp, offset) = case i of
 														OPER {assem=a,dst=d,src=s,jump=j} => let val newTemp = newtemp()
@@ -148,7 +149,7 @@ struct
 																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
 																						  in ([newInstr,rewInstr]@instructions, newTemp::temps)end
 														(*| _ => ...*)
-	
+*)	
 	fun colorear (l,printt) = 
 	let
 		
@@ -156,14 +157,15 @@ struct
 		(*makeWorkList()*)
 		val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
 		val _ = precoloredList := ["rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax"]
-		val _ = registers := addList(empty,["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]) 					
-		val _ = color := fillColor(!precoloredList)			
-		val _ = precolored := addList(empty, !precoloredList)
-		val _ = simplifyWorkSet := fillSimplifyWorkSet (degree, tigerbuild.moveRelated)
+		val _ = registersSet := addList (empty, registers) 
+		(*val _ = registers := addList(empty,["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]) 					*)
+		val _ = color := fillColor(!precoloredList,!color)			
+		val _ = precoloredSet := addList(empty, !precoloredList)
+		val _ = simplifyWorkSet := fillSimplifyWorkSet ()
 		val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))								
 		(*repeat until*)		
 		val _ = repeatUntil()	
-		val _ = AssignColors(coloredNodes, !selectStack)
+		val _ = assignColors(coloredNodes, !selectStack)
 		fun pintar n = (case tabBusca(n,!color) of
 												NONE => raise Fail ("Temporal sin color asignado "^n)
 												| SOME c => c) 							 		 				

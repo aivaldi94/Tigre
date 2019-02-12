@@ -4,8 +4,8 @@ struct
 	open tigertemp
 	open tigertab
 	open Splayset
-
-	val K = 16 (* #tigerframe.registers*)
+	open tigerframe
+	
 	fun name x = x
 	fun id x = x
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
@@ -24,7 +24,7 @@ struct
 	val moveRelated = ref empty
 	(*--------------*)
 
-	(* copiado de tigerframe ver cómo hacerlo *)
+	(* 
 	val fp = "rbp"				(* frame pointer *)
 	val sp = "rsp"				(* stack pointer *)
 	val rv = "rax"				(* return value  *)
@@ -37,8 +37,7 @@ struct
 	val callersaves = [rv,rcx,rdx,rsi,rdi,r8,r9]	
 	val calleesaves = ["rbx", fp, sp, "r10", "r11", "r12", "r13", "r14", "r15"]
 	val registers = [rv,"rbx",rcx,rdx,rsi,rdi,fp,sp,r8,r9,"r10","r11","r12","r13","r14","r15"]
-	(*--------------*)
-	
+	*)
 	fun isMoveRelated t = member (!moveRelated,t)
 	
 	fun build (instrList : instr list,pFlag) = 
