@@ -20,7 +20,7 @@ struct
 	val color = ref (tabNueva())
 	val precoloredList = ref([])
 	val precolored = ref(empty)
-	val spilledNodes = ref (empty) : tigertemp.temp Splayset.set ref
+	val spilledNodes = ref ([])
 	
 	fun getDegree t = Splayset.numItems (buscoEnTabla t)	
 		
@@ -102,7 +102,7 @@ struct
 											val okColors = Splayset.foldl (fn (n : tigertemp.temp,s) => if member (uni,n) then difference (s,add(empty,buscoEnTabla(n,!color))) else s) (!registers) adj
 											val cNodes' = case length (listItems(okColors)) of
 														0 => (let 
-																val _ = spilledNodes := union(!spilledNodes, add(empty,n))
+																val _ = spilledNodes := n::(!spilledNodes)
 															 in cNodes end)
 														| _ => (let 
 																	val c = hd(listItems(okColors))
@@ -110,6 +110,31 @@ struct
 																in union (cNodes, add(empty, n)) end)
 										in AssignColors (cNodes', stack') end)
 									| true => AssignColors (cNodes, tl(stack))											
+(*	
+	(* Tomará la lista de instrucciones, un temporal, un offset*)
+	fun rewriteProgram ([] : instr list, tmp : tigertemp.temp, offset : int) = ([],[]): (instr list * tigertemp.temp list)
+		| rewriteProgram (i::instr, tmp, offset) = case i of
+														OPER {assem=a,dst=tmp,src=s,jump=j} => let val newTemp = newtemp()
+																								  val add = tigerframe.spilledAddress(offset)
+																								  val rewrInstr = OPER {assem=a,dst=newTemp,src=s,jump=j}
+																								  val newInstr = MOVE {assem=a,dst=add,src=newTemp}
+																								  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
+																								in ([rewInstr,newInstr]@instructions, newTemp::temps)end
+														| LABEL {assem=_,lab=_} => let val (intructions, temps) = rewriteProgram(instr,tmp,offset)
+																						in (i::instructions,temps) end
+														| MOVE {assem=a,dst=tmp,src=tmp} => rewriteProgram(instr,tmp,offset)
+														| MOVE {assem=a,dst=tmp,src=s} => let val newTemp = newtemp()
+																							  val add = tigerframe.spilledAddress(offset)
+																							  val rewrInstr = MOVE {assem=a,dst=newTemp,src=s}
+																							  val newInstr = MOVE {assem=a,dst=add,src=newTemp}
+																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
+																						  in ([rewInstr,newInstr]@instructions, newTemp::temps)end
+														| MOVE {assem=a,dst=d,src=tmp} => let val newTemp = newtemp()
+																							  val add = tigerframe.spilledAddress(offset)
+																							  val newInstr = MOVE {assem=a,dst=newTemp,src=add}
+																							  val rewrInstr = MOVE {assem=a,dst=d,src=newTemp}
+																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
+																						  in ([newInstr,rewInstr]@instructions, newTemp::temps)end*)
 	
 	fun colorear (l,printt) = 
 	let
