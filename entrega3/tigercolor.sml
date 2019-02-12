@@ -110,14 +110,26 @@ struct
 																in union (cNodes, add(empty, n)) end)
 										in AssignColors (cNodes', stack') end)
 									| true => AssignColors (cNodes, tl(stack))											
-(*	
+
 	(* Tomará la lista de instrucciones, un temporal, un offset*)
 	fun rewriteProgram ([] : instr list, tmp : tigertemp.temp, offset : int) = ([],[]): (instr list * tigertemp.temp list)
 		| rewriteProgram (i::instr, tmp, offset) = case i of
-														OPER {assem=a,dst=tmp,src=s,jump=j} => let val newTemp = newtemp()
-																								  val add = tigerframe.spilledAddress(offset)
-																								  val rewrInstr = OPER {assem=a,dst=newTemp,src=s,jump=j}
-																								  val newInstr = MOVE {assem=a,dst=add,src=newTemp}
+														OPER {assem=a,dst=d,src=s,jump=j} => let val newTemp = newtemp()
+																								 val add = tigerframe.spilledAddress(offset)
+																								 fun igual n = (string.compare tmp n)
+																								 val isDst = case (find igual d) of
+																												SOME _ => true
+																												| NONE => false
+																								 val isSrc = case (find igual d) of
+																												SOME _ => true
+																												| NONE => false
+																								 val lins = case isDst of
+																												true => let val rewInstr = OPER {assem=a,dst=newTemp,src=s,jump=j}
+																															val newInstr = MOVE {assem=a,dst=add,src=newTemp}
+																														in [rewInstr,newInstr]
+																														
+																								 
+																								  
 																								  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
 																								in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 														| LABEL {assem=_,lab=_} => let val (intructions, temps) = rewriteProgram(instr,tmp,offset)
@@ -126,7 +138,7 @@ struct
 														| MOVE {assem=a,dst=tmp,src=s} => let val newTemp = newtemp()
 																							  val add = tigerframe.spilledAddress(offset)
 																							  val rewrInstr = MOVE {assem=a,dst=newTemp,src=s}
-																							  val newInstr = MOVE {assem=a,dst=add,src=newTemp}
+																							  val newInstr = MOVE {assem=a,dst=add,src=newTemp} (* es OPER*)
 																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
 																						  in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 														| MOVE {assem=a,dst=d,src=tmp} => let val newTemp = newtemp()
@@ -134,7 +146,8 @@ struct
 																							  val newInstr = MOVE {assem=a,dst=newTemp,src=add}
 																							  val rewrInstr = MOVE {assem=a,dst=d,src=newTemp}
 																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
-																						  in ([newInstr,rewInstr]@instructions, newTemp::temps)end*)
+																						  in ([newInstr,rewInstr]@instructions, newTemp::temps)end
+														(*| _ => ...*)
 	
 	fun colorear (l,printt) = 
 	let
