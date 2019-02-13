@@ -15,7 +15,6 @@ struct
 	val spillWorkSet = ref (empty)
 	val simplifyWorkSet = ref(empty)
 	val degree = ref (tabNueva())
-	val coloredNodes = empty
 	val color = ref (tabNueva())
 	val precoloredList = ref([])
 	val precoloredSet = ref(empty)
@@ -87,7 +86,7 @@ struct
 						  in if fin then () else repeatDo () end												
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
-								
+						
 								0 => (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
@@ -138,7 +137,7 @@ struct
 														
 	(* La lista de instrucciones y el frame serán importados. La lista de temporales primera debe ser vacía*) 
 	fun rewriteProgram(linstr : instr list, f : frame, ltemp : tigertemp.temp list) = case length(!spilledNodes) of
-												0 => (linstr,ltemp)
+												0 => (print("Programa reescrito\n");(linstr,ltemp))
 												| _ => 	let val n = hd(!spilledNodes) 
 															val _ = spilledNodes := tl(!spilledNodes)
 															val InFrame k = allocLocal f true
@@ -150,35 +149,65 @@ struct
 							val _ = simplifyWorkSet := empty
 							val _ = degree := tabNueva()
 							val _ = color := tabNueva()
-							val _ = precoloredList := []
 							val _ = precoloredSet := empty
 							val _ = spilledNodes := []
 							val _ = registersSet := empty
 						in () end
-	
-	fun colorear (l,f,printt) = 
-	let
-		(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
-		val _ = initialize()
+
+	fun pintar n = (case tabBusca(n,!color) of
+						NONE => raise Fail ("Temporal sin color asignado "^n)
+						| SOME c => c) 	
+										
+	fun colorear'(l,f,initial) = 
+		let val _ = tigerbuild.build(l,1)		
 		
-		val _ = tigerbuild.build(l,printt)		
-		(*makeWorkList()*)
-		val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
-		val _ = precoloredList := ["rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax"]
-		val _ = registersSet := addList (empty, registers) 
-		(*val _ = registers := addList(empty,["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]) 					*)
-		val _ = color := fillColor(!precoloredList,!color)			
-		val _ = precoloredSet := addList(empty, !precoloredList)
-		val _ = simplifyWorkSet := fillSimplifyWorkSet ()
-		val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))								
-		(*repeat until*)		
-		val _ = repeatUntil()	
+			val _ = spilledNodes := []
+			
+			(*makeWorkList()*)
+			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
 
-		val _ = assignColors(coloredNodes, !selectStack)
+			val _ = color := fillColor(!precoloredList,!color)			
+			val _ = simplifyWorkSet := initial
+			val simplifyWorkSet' = !simplifyWorkSet
+			
+			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))		
+									
+			(*repeat until*)		
+			val _ = repeatUntil()	
 
-		fun pintar n = (case tabBusca(n,!color) of
-												NONE => raise Fail ("Temporal sin color asignado "^n)
-												| SOME c => c) 							 		 				
-	in pintar end	 
+			(* assign colors*)
+			val _ = assignColors(empty, !selectStack)
+
+			(* rewrite program*)
+			val (instructions, temps) = rewriteProgram(l,f,[])
+		in if temps = [] then pintar else colorear'(instructions,f, addList (simplifyWorkSet', temps) ) end	
+		
+	fun colorear (l,f,printt) = 
+		let
+			(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
+			val _ = initialize()
+			
+			val _ = tigerbuild.build(l,printt)		
+			(*makeWorkList()*)
+			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
+			val _ = precoloredList := ["rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax"]
+			val _ = registersSet := addList (empty, registers) 
+			(*val _ = registers := addList(empty,["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]) 					*)
+			val _ = color := fillColor(!precoloredList,!color)			
+			val _ = precoloredSet := addList(empty, !precoloredList)
+			val _ = simplifyWorkSet := fillSimplifyWorkSet ()
+			val simplifyWorkSet' = !simplifyWorkSet
+			
+			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))								
+			(*repeat until*)		
+			val _ = repeatUntil()	
+
+			(* assign colors*)
+			val _ = assignColors(empty, !selectStack)
+
+			(* rewrite program*)
+			val (instructions, temps) = rewriteProgram(l,f,[])
+									 		 				
+		in if temps = [] then (print("No hizo spill\n");pintar) else colorear'(instructions,f, addList (simplifyWorkSet', temps) ) end	 
 end
 

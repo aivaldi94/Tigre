@@ -13,9 +13,6 @@ val simplifyWorkSet : tigertemp.temp Splayset.set ref
 (* degree: tabla que asocia a cada nodo con la cantidad de vecinos que posee *)
 val degree : (tigertemp.temp,int) tigertab.Tabla ref		
 
-(* coloredNodes:  nodos coloreados exitosamente *)
-val coloredNodes : tigertemp.temp Splayset.set 
-
 (* color: tabla que asocia a cada nodo con su color elegido por el algoritmo *)
 val color : (tigertemp.temp ,tigertemp.temp) tigertab.Tabla ref
 
