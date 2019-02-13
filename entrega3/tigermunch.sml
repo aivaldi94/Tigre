@@ -9,6 +9,8 @@ open tigerit
 (* Da vuelta los argumentos a partir del septimo, para que sean correctamente pusheados (en orden inverso) *)
 fun sortArgs xs = if length xs > 6 then (List.take(xs,6)) @ rev(List.drop(xs,6)) else xs
 
+fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
+
 fun procEntryExit2 (f : tigerframe.frame,body : instr list) =  
 					let
 					    val isMain = (tigerframe.name f) = "_tigermain"
@@ -20,11 +22,11 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 						val fetchTemps = ListPair.zip (tempList, tigerframe.calleesaves)
 						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
 						val fetchList = map fetch fetchTemps
+						val _ = print("\n\nCantidad de calleesaves: "^its(length(tigerframe.calleesaves))^"\n\n")
 				   in  if isMain then body else storeList@body@fetchList end	
 				   
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let
-	fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 	val ilist = ref ([] : tigerassem.instr list)
 	
 	fun emit x = ilist := x :: !ilist

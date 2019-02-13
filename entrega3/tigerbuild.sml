@@ -232,19 +232,19 @@ struct
 									B son todos los liveouts en la instrucción donde se define tmp*)									
 									in case i of
 											OPER {assem=a,dst=d,src=_,jump=_} => 
-												if List.null(d) then (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");fillInterf(n-1,tab)) else (let 
+												if List.null(d) then (*(print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");*)fillInterf(n-1,tab)(*)*) else (let 
 													val dSet = Splayset.addList(empty, d)
 													val liveouts' = difference (liveouts,dSet)
-													val _ = print(Int.toString(numItems(liveouts'))^"\n")
+													(*val _ = print(Int.toString(numItems(liveouts'))^"\n")*)
 													fun f ((tmp, t) : (temp * interfTab)) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t))	(* tab' tiene todos las aristas que comienzan con di*)
 													val tab' = List.foldl f tab d
 													val g = (fn (tmp,t) => tabRInserta (tmp,Splayset.union(findSet(tmp,tab'),dSet),t)) : (temp * interfTab) -> interfTab
 													val liveoutsList = Splayset.listItems liveouts'	
-													val _ = print(Int.toString(numItems(dSet))^"\n")			
+													(*val _ = print(Int.toString(numItems(dSet))^"\n")*)			
 													val tab'' = List.foldl g tab' liveoutsList
-												in (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");fillInterf(n-1,tab'')) end)
+												in (*(print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");*)fillInterf(n-1,tab'')(*)*) end)
 												
-											| LABEL {assem=a,lab=_} => (print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");fillInterf(n-1,tab))
+											| LABEL {assem=a,lab=_} => (*(print(Int.toString(n)^" "^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab);print("\n");*)fillInterf(n-1,tab)(*)*)
 											
 											| MOVE {assem=a,dst=d,src=s} =>
 												let
@@ -255,7 +255,7 @@ struct
 													val tab' = f'(d,tab)		
 													val g = (fn (tmp,t) => tabRInserta (tmp,Splayset.add(findSet(tmp,tab'),d),t)) : (temp * interfTab) -> interfTab	val liveoutsList = Splayset.listItems liveouts'				
 													val tab'' = List.foldl g tab' liveoutsList												
-												in (print(Int.toString(n)^" MOVE"^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");fillInterf(n-1,tab'')) end
+												in (*(print(Int.toString(n)^" MOVE"^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");*)fillInterf(n-1,tab'')(*)*) end
 								end		
 
 		val _ = interf := fillInterf(!longNatToInstr,tabNueva())

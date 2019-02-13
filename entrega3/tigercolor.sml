@@ -95,9 +95,20 @@ struct
 											val stack' = tl(stack)
 											val adj = buscoEnTabla (n,!interf) : tigertemp.temp Splayset.set
 											val uni = union (cNodes, !precoloredSet) : tigertemp.temp Splayset.set
-											val okColors = Splayset.foldl (fn (n : tigertemp.temp,s) => if member (uni,n) then difference (s,add(empty,buscoEnTabla(n,!color))) else s) (!registersSet) adj
+											val _ = print "\nuni es\n"
+											val _ = List.app print (listItems uni)
+											fun discardColors (n : tigertemp.temp,s) = let 
+																					val isMember = member (uni,n)
+																					val colorUsed = if isMember then add(empty,buscoEnTabla(n,!color)) else empty
+																					val _ = print ("Descarto\n")
+																					val _ =  List.app print (listItems colorUsed)
+																				in difference (s,colorUsed) end
+											val okColors = Splayset.foldl discardColors (!registersSet) adj
+											val _ = print "\nokColors es\n"
+											val _ = List.app print (listItems okColors)
 											val cNodes' = case length (listItems(okColors)) of
 														0 => (let 
+																val _ = raise Fail ("Está bien")
 																val _ = spilledNodes := n::(!spilledNodes)
 															 in cNodes end)
 														| _ => (let 
@@ -167,7 +178,8 @@ struct
 	(* La lista de instrucciones y el frame serán importados. La lista de temporales primera debe ser vacía*) 
 	fun rewriteProgram(linstr : instr list, f : frame, ltemp : tigertemp.temp list) = case length(!spilledNodes) of
 												0 => (print("Programa reescrito\n");(linstr,ltemp))
-												| _ => 	let val n = hd(!spilledNodes) 
+												| _ => 	let val _ = raise Fail "Esto esta bien"
+															val n = hd(!spilledNodes) 
 															val _ = spilledNodes := tl(!spilledNodes)
 															val InFrame k = allocLocal f true
 															val (instructions, temps) = forEachSpilled(linstr,n,k)
@@ -188,7 +200,8 @@ struct
 						| SOME c => c) 	
 										
 	fun colorear'(l,f,initial) = 
-		let val _ = "ENTRO A COLOREAR'\n\n"
+		let val _ = raise Fail "CUALQUIERA"
+			val _ = "ENTRO A COLOREAR'\n\n"
 			val _ = tigerbuild.build(l,1)		
 		
 			val _ = spilledNodes := []
@@ -209,6 +222,7 @@ struct
 
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
+			
 		in if temps = [] then pintar else colorear'(instructions,f, addList (coloredNodes, temps) ) end	
 		
 	fun colorear (l,f,printt) = 
