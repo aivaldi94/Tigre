@@ -15,10 +15,10 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 					    fun store r = 
 							let 
 								val newTemp = newtemp()
-							in (tigerassem.MOVE {assem="movq %'s0, %'s1\n",dst=newTemp,src=r},newTemp) end
+							in (tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=newTemp,src=r},newTemp) end
 						val (storeList,tempList) = ListPair.unzip (map store tigerframe.calleesaves)
 						val fetchTemps = ListPair.zip (tempList, tigerframe.calleesaves)
-						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'s1\n",dst=c,src=t}
+						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
 						val fetchList = map fetch fetchTemps
 				   in  if isMain then body else storeList@body@fetchList end	
 				   

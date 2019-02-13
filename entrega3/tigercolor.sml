@@ -125,14 +125,14 @@ struct
 								val d' = map (fn n => if n = tmp then newTemp else n) d
 								val s' = map (fn n => if n = tmp then newTemp else n) s
 								val rewInstr = OPER {assem=a,dst=d',src=s',jump=j}
-								val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+								val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[fp,newTemp],src=[],jump=NONE}
 								val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 							in ([newInstr1,rewInstr,newInstr2]@instructions, newTemp::temps)end
 					| false => let val newTemp = newtemp()
 								in (case isDst of
 									true => let val d' = map (fn n => if n = tmp then newTemp else n) d
 												val rewInstr = OPER {assem=a,dst=d',src=s,jump=j}
-												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[fp,newTemp],src=[],jump=NONE}
 												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 									| false => (case isSrc of
@@ -151,7 +151,7 @@ struct
 					| false => let val newTemp = newtemp()
 								in (case isDst of
 									true => let val rewInstr = MOVE {assem=a,dst=newTemp,src=s}
-												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[fp,newTemp],src=[],jump=NONE}
 												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 									| false => (case isSrc of
@@ -188,7 +188,8 @@ struct
 						| SOME c => c) 	
 										
 	fun colorear'(l,f,initial) = 
-		let val _ = tigerbuild.build(l,1)		
+		let val _ = "ENTRO A COLOREAR'\n\n"
+			val _ = tigerbuild.build(l,1)		
 		
 			val _ = spilledNodes := []
 			
