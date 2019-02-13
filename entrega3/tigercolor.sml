@@ -24,7 +24,7 @@ struct
 	fun getDegree t = buscoEnTabla (t,!degree)
 		
 	fun fillSimplifyWorkSet () = let
-									val lowDegreeList = tabClaves (tabFiltra ((fn n => if n < K then true else false),(!degree)))
+									val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),(!degree)))
 									(*val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)*)
 									(* agregar para coalese y spill in addList (nonMoveRelSet,lowDegreeList) end*)
 								 in addList (empty,lowDegreeList) end
