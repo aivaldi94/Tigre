@@ -121,8 +121,8 @@ fun main(args) =
 							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $1024, %rsp\n\n"
 							  val epi = "\n\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n"
 							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)							  
-							  val pintar = tigercolor.colorear(l1,1)
-								  val l3 = map (fn i => tigerassem.format pintar i) l1
+							  val pintar = tigercolor.colorear(l1,f,1)
+							  val l3 = map (fn i => tigerassem.format pintar i) l1
 								  (*
 							  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 								 val l2 = List.concat (map (fn (f,il) => il) l1)

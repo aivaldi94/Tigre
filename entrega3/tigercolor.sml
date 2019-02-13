@@ -65,9 +65,6 @@ struct
 											val setK = decrementDegree (adjN)
 											val _ = simplifyWorkSet :=	difference (union(!simplifyWorkSet,setK),addList(empty,[n]))
 											in  simplify () end)
-	
-	
-
 
 	fun fillColor ([],c) = c
 	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
@@ -112,46 +109,57 @@ struct
 									| true => assignColors (cNodes, tl(stack))											
 
 	(* Tomará la lista de instrucciones, un temporal, un offset*)
-(*
-	fun rewriteProgram ([] : instr list, tmp : tigertemp.temp, offset : int) = ([],[]): (instr list * tigertemp.temp list)
-		| rewriteProgram (i::instr, tmp, offset) = case i of
-														OPER {assem=a,dst=d,src=s,jump=j} => let val newTemp = newtemp()
-																								 val add = tigerframe.spilledAddress(offset)
-																								 fun igual n = (string.compare tmp n)
-																								 val isDst = case (find igual d) of
-																												SOME _ => true
-																												| NONE => false
-																								 val isSrc = case (find igual d) of
-																												SOME _ => true
-																												| NONE => false
-																								 val lins = case isDst of
-																												true => let val rewInstr = OPER {assem=a,dst=newTemp,src=s,jump=j}
-																															val newInstr = MOVE {assem=a,dst=add,src=newTemp}
-																														in [rewInstr,newInstr]
-																														
-																								 
-																								  
-																								  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
-																								in ([rewInstr,newInstr]@instructions, newTemp::temps)end
-														| LABEL {assem=_,lab=_} => let val (intructions, temps) = rewriteProgram(instr,tmp,offset)
-																						in (i::instructions,temps) end
-														| MOVE {assem=a,dst=tmp,src=tmp} => rewriteProgram(instr,tmp,offset)
-														| MOVE {assem=a,dst=tmp,src=s} => let val newTemp = newtemp()
-																							  val add = tigerframe.spilledAddress(offset)
-																							  val rewrInstr = MOVE {assem=a,dst=newTemp,src=s}
-																							  val newInstr = MOVE {assem=a,dst=add,src=newTemp} (* es OPER*)
-																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
-																						  in ([rewInstr,newInstr]@instructions, newTemp::temps)end
-														| MOVE {assem=a,dst=d,src=tmp} => let val newTemp = newtemp()
-																							  val add = tigerframe.spilledAddress(offset)
-																							  val newInstr = MOVE {assem=a,dst=newTemp,src=add}
-																							  val rewrInstr = MOVE {assem=a,dst=d,src=newTemp}
-																							  val (intructions, temps) = rewriteProgram(instr,tmp,offset)
-																						  in ([newInstr,rewInstr]@instructions, newTemp::temps)end
-														(*| _ => ...*)
-*)	
-	fun colorear (l,printt) = 
+
+	fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
+
+	fun forEachSpilled ([] : instr list, tmp : tigertemp.temp, offset : int) = ([],[]): (instr list * tigertemp.temp list)
+		| forEachSpilled (i::instr, tmp, offset) = 
+			case i of												
+			 MOVE {assem=a,dst=d,src=s} => (let	val isDst = (d = tmp)
+												val isSrc = (s = tmp)
+						   					 in (case (isDst andalso isSrc) of
+												true => forEachSpilled(instr,tmp,offset)
+												| false => let val newTemp = newtemp()
+																(*val add = tigerframe.spilledAddress(offset)*)
+															in (case isDst of
+																	true => let val rewInstr = MOVE {assem=a,dst=newTemp,src=s}
+																				val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+																				val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+																			in ([rewInstr,newInstr]@instructions, newTemp::temps)end
+																	| false => (case isSrc of
+																			true => let val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+																						val rewInstr = MOVE {assem=a,dst=d,src=newTemp}
+																						val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+																					in ([newInstr,rewInstr]@instructions, newTemp::temps)end
+																			| false => let val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+																						in (i::instructions,temps) end))end)end)
+				| _ => let val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+						in (i::instructions,temps) end																			
+														
+	(* La lista de instrucciones y el frame serán importados. La lista de temporales primera debe ser vacía*) 
+	fun rewriteProgram(linstr : instr list, f : frame, ltemp : tigertemp.temp list) = case length(!spilledNodes) of
+												0 => (linstr,ltemp)
+												| _ => 	let val n = hd(!spilledNodes) 
+															val _ = spilledNodes := tl(!spilledNodes)
+															val InFrame k = allocLocal f true
+															val (instructions, temps) = forEachSpilled(linstr,n,k)
+														in rewriteProgram(instructions,f,ltemp@temps) end
+
+	fun initialize() = let 	val _ = selectStack := []
+							val _ = spillWorkSet := empty
+							val _ = simplifyWorkSet := empty
+							val _ = degree := tabNueva()
+							val _ = color := tabNueva()
+							val _ = precoloredList := []
+							val _ = precoloredSet := empty
+							val _ = spilledNodes := []
+							val _ = registersSet := empty
+						in () end
+	
+	fun colorear (l,f,printt) = 
 	let
+		(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
+		val _ = initialize()
 		
 		val _ = tigerbuild.build(l,printt)		
 		(*makeWorkList()*)
@@ -165,7 +173,9 @@ struct
 		val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))								
 		(*repeat until*)		
 		val _ = repeatUntil()	
+
 		val _ = assignColors(coloredNodes, !selectStack)
+
 		fun pintar n = (case tabBusca(n,!color) of
 												NONE => raise Fail ("Temporal sin color asignado "^n)
 												| SOME c => c) 							 		 				
