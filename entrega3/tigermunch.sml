@@ -22,8 +22,7 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 						val fetchTemps = ListPair.zip (tempList, tigerframe.calleesaves)
 						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
 						val fetchList = map fetch fetchTemps
-						val _ = print("\n\nCantidad de calleesaves: "^its(length(tigerframe.calleesaves))^"\n\n")
-				   in  if isMain then body else storeList@body@fetchList end	
+				   in  if isMain then (print("es main\n");body) else storeList@body@fetchList end	
 				   
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let
