@@ -15,6 +15,7 @@ val K : int
 datatype access = InFrame of int | InReg of tigertemp.label
 val fpPrev : int
 val offStaticLink : int
+val calleesaves : tigertemp.temp list
 val newFrame : {name: tigertemp.label, nameViejo: tigertemp.label,formals: bool list} -> frame
 val name : frame -> tigertemp.label
 val nameViejo : frame -> tigertemp.label
@@ -37,7 +38,6 @@ val exp : access -> int -> tigertree.exp
 val getFrame : int -> tigertree.exp
 val externalCall : string * tigertree.exp list -> tigertree.exp
 val procEntryExit1 : frame * tigertree.stm -> tigertree.stm
-(*val procEntryExit2 : frame * tigerassem.instr list -> tigerassem.instr list*)
 datatype frag = PROC of {body: tigertree.stm, frame: frame}
 	| STRING of tigertemp.label * string
 

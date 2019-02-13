@@ -17,17 +17,17 @@ fun errParsing(lbuf) = (print("Error en parsing!("
 fun main(args) =
 	let	fun arg(l, s) =
 			(List.exists (fn x => x=s) l, List.filter (fn x => x<>s) l)
-		val (arbol, l1)		= arg(args, "-arbol")
-		val (escapes, l2)	= arg(l1, "-escapes") 
-		val (ir, l3)		= arg(l2, "-ir") 
-		val (canon, l4)		= arg(l3, "-canon") 
-		val (code, l5)		= arg(l4, "-code") 
-		val (flow, l6)		= arg(l5, "-flow") 
-		val (inter, l7)		= arg(l6, "-inter") 
-		val (precolored, l8)	= arg(l7, "-precolored")
-		val (sregalloc, l9)		= arg(l8, "-sregalloc") (*simple reg alloc*)
-		val (asm, l10)		= arg(l9, "-asm")
-		val (colored, l11)		= arg(l10, "-colored")
+		val (arbol, l1)		 = arg(args, "-arbol")
+		val (escapes, l2)	 = arg(l1, "-escapes") 
+		val (ir, l3)		 = arg(l2, "-ir") 
+		val (canon, l4)		 = arg(l3, "-canon") 
+		val (code, l5)		 = arg(l4, "-code") 
+		val (flow, l6)		 = arg(l5, "-flow") 
+		val (inter, l7)		 = arg(l6, "-inter") 
+		val (precolored, l8) = arg(l7, "-precolored")
+		val (sregalloc, l9)	 = arg(l8, "-sregalloc") (*simple reg alloc*)
+		val (asm, l10)		 = arg(l9, "-asm")
+		val (colored, l11)	 = arg(l10, "-colored")
 		val entrada =
 			case l11 of
 			[n] => ((open_in n)
@@ -120,8 +120,9 @@ fun main(args) =
 							  val nFrame = tigerframe.name f
 							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $1024, %rsp\n\n"
 							  val epi = "\n\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n"
-							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)							  
-							  val pintar = tigercolor.colorear(l1,f,1)
+							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)	
+							  val l2 = tigermunch.procEntryExit2(f,l1)						  
+							  val pintar = tigercolor.colorear(l2,f,1)
 							  val l3 = map (fn i => tigerassem.format pintar i) l1
 								  (*
 							  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									

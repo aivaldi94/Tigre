@@ -90,14 +90,6 @@ fun string(l, s) = l^tigertemp.makeString(s)^"\n"
 fun getFormals(f: frame) = #formals f
 fun getLocals(f: frame) = #locals f
 
-(* Función original*)
-(*fun formals({formals=f, ...}: frame) = 
-	let	fun aux(n, []) = []
-		| aux(n, h::t) = InFrame(n)::aux(n+argsGap, t)
-		(*| aux(n, false::t) = InReg(tigertemp.newtemp())::aux(n, t)*)
-	in aux(argsInicial, f) end
-*)
-
 (* El InFrame que se agrega al inicio corresponde al static link*)
 fun formals({arguments=ar, ...}: frame) = [InFrame (offStaticLink)] @ !ar 
 
@@ -138,8 +130,9 @@ fun seq [] = EXP (CONST 0)
 	| seq [s] = s
 	| seq (x::xs) = SEQ (x, seq xs)
 
-fun procEntryExit1 (f : frame,body) =  let
-					   val isMain = if (#name f) = "_tigermain" then true else false
+fun procEntryExit1 (f : frame,body) =  
+					let
+					    val isMain = (#name f) = "_tigermain"
 					    fun zipear [] _ = []
 					    | zipear (x::xs) n = [(x,n)] @ zipear xs (n+1)
 						
@@ -155,8 +148,8 @@ fun procEntryExit1 (f : frame,body) =  let
 						
 						fun accToMove ((InReg t),n) = if n<6 then (print("inreg <6\n");MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
 						  | accToMove ((InFrame k),n) = if n<6 then (print("inframe <6  "^its(k)^"\n");MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
-						(*val listMoves =map accToMove lacc*)
-
 				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
+				   
+			   
 end
 
