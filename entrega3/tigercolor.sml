@@ -87,7 +87,7 @@ struct
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
 						
-								0 => (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))
+								0 => (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color);cNodes)
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
 										(let 
@@ -113,25 +113,54 @@ struct
 
 	fun forEachSpilled ([] : instr list, tmp : tigertemp.temp, offset : int) = ([],[]): (instr list * tigertemp.temp list)
 		| forEachSpilled (i::instr, tmp, offset) = 
-			case i of												
-			 MOVE {assem=a,dst=d,src=s} => (let	val isDst = (d = tmp)
-												val isSrc = (s = tmp)
-						   					 in (case (isDst andalso isSrc) of
-												true => forEachSpilled(instr,tmp,offset)
-												| false => let val newTemp = newtemp()
-																(*val add = tigerframe.spilledAddress(offset)*)
-															in (case isDst of
-																	true => let val rewInstr = MOVE {assem=a,dst=newTemp,src=s}
-																				val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
-																				val (instructions, temps) = forEachSpilled(instr,tmp,offset)
-																			in ([rewInstr,newInstr]@instructions, newTemp::temps)end
-																	| false => (case isSrc of
-																			true => let val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
-																						val rewInstr = MOVE {assem=a,dst=d,src=newTemp}
-																						val (instructions, temps) = forEachSpilled(instr,tmp,offset)
-																					in ([newInstr,rewInstr]@instructions, newTemp::temps)end
-																			| false => let val (instructions, temps) = forEachSpilled(instr,tmp,offset)
-																						in (i::instructions,temps) end))end)end)
+			case i of
+			OPER {assem=a,dst=d,src=s,jump=j} => 
+				(let	
+					fun igual n = (n=tmp)
+					val isDst = List.exists igual d
+					val isSrc = List.exists igual s
+				 in (case (isDst andalso isSrc) of
+					true => let val newTemp = newtemp()
+								val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+								val d' = map (fn n => if n = tmp then newTemp else n) d
+								val s' = map (fn n => if n = tmp then newTemp else n) s
+								val rewInstr = OPER {assem=a,dst=d',src=s',jump=j}
+								val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+								val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+							in ([newInstr1,rewInstr,newInstr2]@instructions, newTemp::temps)end
+					| false => let val newTemp = newtemp()
+								in (case isDst of
+									true => let val d' = map (fn n => if n = tmp then newTemp else n) d
+												val rewInstr = OPER {assem=a,dst=d',src=s,jump=j}
+												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
+									| false => (case isSrc of
+										true => let val s' = map (fn n => if n = tmp then newTemp else n) s
+													val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+													val rewInstr = OPER {assem=a,dst=d,src=s',jump=j}
+													val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+												in ([newInstr,rewInstr]@instructions, newTemp::temps)end
+										| false => let val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+													in (i::instructions,temps) end))end)end)
+			 | MOVE {assem=a,dst=d,src=s} => 
+				(let	val isDst = (d = tmp)
+						val isSrc = (s = tmp)
+				 in (case (isDst andalso isSrc) of
+					true => forEachSpilled(instr,tmp,offset)
+					| false => let val newTemp = newtemp()
+								in (case isDst of
+									true => let val rewInstr = MOVE {assem=a,dst=newTemp,src=s}
+												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'d0)\n",dst=[fp],src=[newTemp],jump=NONE}
+												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
+									| false => (case isSrc of
+										true => let val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+													val rewInstr = MOVE {assem=a,dst=d,src=newTemp}
+													val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+												in ([newInstr,rewInstr]@instructions, newTemp::temps)end
+										| false => let val (instructions, temps) = forEachSpilled(instr,tmp,offset)
+													in (i::instructions,temps) end))end)end)
 				| _ => let val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 						in (i::instructions,temps) end																			
 														
@@ -168,7 +197,6 @@ struct
 
 			val _ = color := fillColor(!precoloredList,!color)			
 			val _ = simplifyWorkSet := initial
-			val simplifyWorkSet' = !simplifyWorkSet
 			
 			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))		
 									
@@ -176,11 +204,11 @@ struct
 			val _ = repeatUntil()	
 
 			(* assign colors*)
-			val _ = assignColors(empty, !selectStack)
+			val coloredNodes = assignColors(empty, !selectStack)
 
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
-		in if temps = [] then pintar else colorear'(instructions,f, addList (simplifyWorkSet', temps) ) end	
+		in if temps = [] then pintar else colorear'(instructions,f, addList (coloredNodes, temps) ) end	
 		
 	fun colorear (l,f,printt) = 
 		let
@@ -192,22 +220,21 @@ struct
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
 			val _ = precoloredList := ["rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax"]
 			val _ = registersSet := addList (empty, registers) 
-			(*val _ = registers := addList(empty,["rax","rbx","rcx","rdx","rsi","rdi","rbp","rsp","r8","r9","r10","r11","r12","r13","r14","r15"]) 					*)
+				
 			val _ = color := fillColor(!precoloredList,!color)			
 			val _ = precoloredSet := addList(empty, !precoloredList)
 			val _ = simplifyWorkSet := fillSimplifyWorkSet ()
-			val simplifyWorkSet' = !simplifyWorkSet
 			
 			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))								
 			(*repeat until*)		
 			val _ = repeatUntil()	
 
 			(* assign colors*)
-			val _ = assignColors(empty, !selectStack)
+			val coloredNodes = assignColors(empty, !selectStack)
 
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
 									 		 				
-		in if temps = [] then (print("No hizo spill\n");pintar) else colorear'(instructions,f, addList (simplifyWorkSet', temps) ) end	 
+		in if temps = [] then (print("No hizo spill\n");pintar) else colorear'(instructions,f, addList (coloredNodes, temps) ) end	 
 end
 
