@@ -240,7 +240,7 @@ struct
 			val _ = precoloredSet := addList(empty, !precoloredList)
 			val _ = simplifyWorkSet := fillSimplifyWorkSet ()
 			
-			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n > K),!degree)))								
+			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n >= K),!degree)))								
 			(*repeat until*)		
 			val _ = repeatUntil()	
 
