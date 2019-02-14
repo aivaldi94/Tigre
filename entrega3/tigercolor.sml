@@ -133,11 +133,11 @@ struct
 				 in (case (isDst andalso isSrc) of
 					true => let val _ = raise Fail "Es fuente y destino"
 								val newTemp = newtemp()
-								val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+								val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[sp],jump=NONE}
 								val d' = map (fn n => if n = tmp then newTemp else n) d
 								val s' = map (fn n => if n = tmp then newTemp else n) s
 								val rewInstr = OPER {assem=a,dst=d',src=s',jump=j}
-								val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[fp,newTemp],jump=NONE}
+								val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[sp,newTemp],jump=NONE}
 								val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 							in ([newInstr1,rewInstr,newInstr2]@instructions, newTemp::temps)end
 					| false => let val newTemp = newtemp()
@@ -145,13 +145,13 @@ struct
 									true => let val _ = raise Fail "Es destino"
 												val d' = map (fn n => if n = tmp then newTemp else n) d
 												val rewInstr = OPER {assem=a,dst=d',src=s,jump=j}
-												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[fp,newTemp],jump=NONE}
+												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,sp],jump=NONE}
 												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 									| false => (case isSrc of
 										true => let val _ = raise Fail "Es fuente"
 													val s' = map (fn n => if n = tmp then newTemp else n) s
-													val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+													val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[sp],jump=NONE}
 													val rewInstr = OPER {assem=a,dst=d,src=s',jump=j}
 													val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 												in ([newInstr,rewInstr]@instructions, newTemp::temps)end
@@ -165,11 +165,11 @@ struct
 					| false => let val newTemp = newtemp()
 								in (case isDst of
 									true => let val rewInstr = MOVE {assem=a,dst=newTemp,src=s}
-												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[fp,newTemp],jump=NONE}
+												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,sp],jump=NONE}
 												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 									| false => (case isSrc of
-										true => let val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+										true => let val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[sp],jump=NONE}
 													val rewInstr = MOVE {assem=a,dst=d,src=newTemp}
 													val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 												in ([newInstr,rewInstr]@instructions, newTemp::temps)end

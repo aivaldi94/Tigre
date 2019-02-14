@@ -118,11 +118,12 @@ fun main(args) =
 		fun asmFunction [] = "\n"
 		    | asmFunction ((body, f):: xs) = let
 							  val nFrame = tigerframe.name f
-							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $1024, %rsp\n\n"
-							  val epi = "\n\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n"
+							  (*val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $1024, %rsp\n\n"*)
+							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n"
+							  (*val epi = "\n\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n"*)
 							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)	
-							  val l2 = tigermunch.procEntryExit2(f,l1)						  
-							  val (pintar, l3) = tigercolor.colorear(l2,f,0)
+							  val l2 = tigermunch.procEntryExit2(f,l1) (* agregar prologo y epilogo *)					  
+							  val (pintar, l3) = tigercolor.colorear(l2,f,1)
 							  val l4 = map (fn i => tigerassem.format pintar i) l3
 								  (*
 							  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
@@ -136,7 +137,7 @@ fun main(args) =
 							  val l2 = (tigersimpleregalloc.simpleregalloc f l1) : tigerassem.instr list
 	   					      val l3 = map (fn i => tigerassem.format id i) l2
 							*)
-						     in prol^"\n"^concatInstr l4^"\n"^epi^(asmFunction xs) end
+						     in prol^"\n"^concatInstr l4^"\n"^(asmFunction xs) end
 								
 		(* opcion del debug -asm / escribe un archivo llamado prueba.s con el codigo assembler del programa *)
 		val _ = if asm then (let
