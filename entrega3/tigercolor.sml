@@ -67,7 +67,7 @@ struct
 						in repeatUntil() end
 	
 	and simplify () = case (numItems(!simplifyWorkSet)) of 
-								0 => (print("stack:\n");List.app (fn n => print (n^"\n")) (!selectStack);repeatUntil())
+								0 => repeatUntil()
 								| _ => (let val n = hd(listItems (!simplifyWorkSet))											
 											val _ = selectStack := !selectStack @ [n]				
 											val adjN = difference(buscoEnTabla (n,!interf),addList(empty,!selectStack))
@@ -88,7 +88,7 @@ struct
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
 						
-								0 => (selectStack:=[];print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color);cNodes)
+								0 => (print("stack:\n");List.app (fn n => print (n^"\n")) (!selectStack);selectStack:=[];print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color);cNodes)
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
 										(let 
@@ -108,7 +108,7 @@ struct
 											(*val _ = print "\nokColors es\n"
 											val _ = List.app print (listItems okColors)*)
 											val cNodes' = case length (listItems(okColors)) of
-														0 => (let 
+														0 => (let val _ = print ("\nEL NODO SPILL ES "^n^"\n")
 																val _ = spilledNodes := n::(!spilledNodes)
 															 in cNodes end)
 														| _ => (let 
@@ -180,7 +180,7 @@ struct
 														
 	(* La lista de instrucciones y el frame serán importados. La lista de temporales primera debe ser vacía*) 
 	fun rewriteProgram(linstr : instr list, f : frame, ltemp : tigertemp.temp list) = case length(!spilledNodes) of
-												0 => (print("Programa reescrito\n");(linstr,ltemp))
+												0 => (print("Programa reescrito\n");printInstrList linstr;(linstr,ltemp))
 												| _ => 	let 
 															val n = hd(!spilledNodes) 
 															val _ = spilledNodes := tl(!spilledNodes)
@@ -210,8 +210,10 @@ struct
 			
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
-
-			val _ = color := fillColor(!precoloredList,!color)			
+			val _ = precoloredList := ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
+			
+			val _ = color := fillColor(!precoloredList,!color)	
+			val _ = precoloredSet := addList(empty, !precoloredList)		
 			val _ = simplifyWorkSet := initial
 			
 			val _ = spillWorkSet := addList (empty,tabClaves (tabFiltra ((fn n => n >= K),!degree)))		
@@ -225,7 +227,9 @@ struct
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
 			
-		in if temps = [] then pintar else colorear'(instructions,f, addList (coloredNodes, temps) ) end	
+			val _ = (print("Temporales agregados\n");List.app print temps)
+			
+		in if temps = [] then (pintar,instructions) else colorear'(instructions,f, addList (coloredNodes, temps) ) end	
 		
 	fun colorear (l,f,printt) = 
 		let
@@ -235,7 +239,7 @@ struct
 			val _ = tigerbuild.build(l,printt)		
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
-			val _ = precoloredList := ["rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax"]
+			val _ = precoloredList := ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
 			val _ = registersSet := addList (empty, registers) 
 				
 			val _ = color := fillColor(!precoloredList,!color)			
@@ -251,7 +255,9 @@ struct
 
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
+			
+			val _ = (print("Temporales agregados\n");List.app print temps)
 									 		 				
-		in if temps = [] then (print("No hizo spill\n");pintar) else colorear'(instructions,f, addList (coloredNodes, temps) ) end	 
+		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, addList (coloredNodes, temps) ) end	 
 end
 

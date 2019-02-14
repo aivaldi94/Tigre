@@ -31,6 +31,7 @@ val wSz : int
 val log2WSz : int
 val calldefs : tigertemp.temp list
 val callersaves : tigertemp.temp list
+val calleesaves' : tigertemp.temp list
 val registers : tigertemp.temp list
 (* Cambié el tipo
 val exp : access -> tigertree.exp -> tigertree.exp *)

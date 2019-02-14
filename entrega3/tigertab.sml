@@ -91,6 +91,8 @@ val its = Int.toString
 
 fun concatStrings [] = " "
 	|concatStrings (x::xs) = " "^x^concatStrings(xs)
+
+fun printInstrList l = List.app (fn i => print (tigerassem.format name i^"\n")) l
 								
 fun tabPrintIntInstr t = let 
 							val l = tabAList t														

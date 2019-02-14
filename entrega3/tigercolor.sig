@@ -55,7 +55,7 @@ val repeatUntil : unit -> unit
 val assignColors: (tigertemp.temp Splayset.set * tigertemp.temp list) -> tigertemp.temp Splayset.set
 
 (* colorear: funcion que junta todas las partes y hace el coloreo *)
-val colorear : (tigerassem.instr list * tigerframe.frame * int) -> (tigertemp.temp -> tigertemp.temp)
+val colorear : (tigerassem.instr list * tigerframe.frame * int) -> ((tigertemp.temp -> tigertemp.temp) * tigerassem.instr list)
 
 end
 	

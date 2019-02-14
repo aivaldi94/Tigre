@@ -29,4 +29,5 @@ val tabPrintIntTempSet : (int, tigertemp.temp Splayset.set) Tabla -> unit
 val tabPrintIntIntSet : (int, int Splayset.set) Tabla -> unit
 val tabPrintTempTempSet : (tigertemp.temp, tigertemp.temp Splayset.set) Tabla -> unit
 val tabPrintTempTemp : (tigertemp.temp, tigertemp.temp) Tabla -> unit
+val printInstrList : tigerassem.instr list -> unit
 end
