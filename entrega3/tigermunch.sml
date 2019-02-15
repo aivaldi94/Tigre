@@ -26,7 +26,7 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp"],dst=[],jump=NONE},tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},OPER {assem="subq $"^its(i)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
 						val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},OPER {assem = "pop %'d0\n",src=[],dst=["rbp"],jump=NONE},OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
 						val ret = OPER {assem = "ret\n",src=[],dst=[],jump=NONE}
-				   in  if isMain then body@[ret] else prol@storeList@body@fetchList@epil end	
+				   in  if isMain then prol@body@epil(*body@[ret]*) else prol@storeList@body@fetchList@epil end	
 				   
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let
