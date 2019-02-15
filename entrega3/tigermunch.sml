@@ -18,14 +18,15 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 							let 
 								val newTemp = newtemp()
 							in (tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=newTemp,src=r},newTemp) end
-						val (storeList,tempList) = ListPair.unzip (map store tigerframe.calleesaves)
-						val fetchTemps = ListPair.zip (tempList, tigerframe.calleesaves)
+						val (storeList,tempList) = ListPair.unzip (map store tigerframe.calleesaves')
+						val fetchTemps = ListPair.zip (tempList, tigerframe.calleesaves')
 						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
 						val fetchList = map fetch fetchTemps
 						val i = 1024
 						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp"],dst=[],jump=NONE},tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},OPER {assem="subq $"^its(i)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
 						val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},OPER {assem = "pop %'d0\n",src=[],dst=["rbp"],jump=NONE},OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
-				   in  if isMain then body else prol@storeList@body@fetchList@epil end	
+						val ret = OPER {assem = "ret\n",src=[],dst=[],jump=NONE}
+				   in  if isMain then body@[ret] else prol@storeList@body@fetchList@epil end	
 				   
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let

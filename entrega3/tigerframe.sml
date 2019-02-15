@@ -51,7 +51,7 @@ val callersaves = [rv,rcx,rdx,rsi,rdi,r8,r9]
 val calleesaves = ["rbx", fp, sp, "r10", "r11", "r12", "r13", "r14", "r15"]
 val calleesaves' = ["rbx", "r10", "r11", "r12", "r13", "r14", "r15"]
 val registers = [rv,"rbx",rcx,rdx,rsi,rdi,fp,sp,r8,r9,"r10","r11","r12","r13","r14","r15"]
-val K = length(registers)
+val K = 14
 
 fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 
@@ -112,6 +112,7 @@ fun allocLocal (f: frame) b =
 	case b of
 	true =>
 		let	val ret = InFrame ((~(!(#actualLocal f))-(!(#actualArg f)))*localsGap+argsOffInicial) (* REVISAR MULTIPLICAR *)
+			val _ = print "allocLocal true"
 		in	#actualLocal f:=(!(#actualLocal f)+1); ret end
 	| false => InReg(tigertemp.newtemp())
 
