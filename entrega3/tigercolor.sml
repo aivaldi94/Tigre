@@ -131,7 +131,7 @@ struct
 					val isDst = List.exists igual d
 					val isSrc = List.exists igual s
 				 in (case (isDst andalso isSrc) of
-					true => let val _ = raise Fail "Es fuente y destino"
+					true => let val _ = print "Es fuente y destino"
 								val newTemp = newtemp()
 								val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
 								val d' = map (fn n => if n = tmp then newTemp else n) d
@@ -142,14 +142,14 @@ struct
 							in ([newInstr1,rewInstr,newInstr2]@instructions, newTemp::temps)end
 					| false => let val newTemp = newtemp()
 								in (case isDst of
-									true => let val _ = raise Fail "Es destino"
+									true => let val _ = print "Es destino"
 												val d' = map (fn n => if n = tmp then newTemp else n) d
 												val rewInstr = OPER {assem=a,dst=d',src=s,jump=j}
 												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,fp],jump=NONE}
 												val (instructions, temps) = forEachSpilled(instr,tmp,offset)
 											in ([rewInstr,newInstr]@instructions, newTemp::temps)end
 									| false => (case isSrc of
-										true => let val _ = raise Fail "Es fuente"
+										true => let 
 													val s' = map (fn n => if n = tmp then newTemp else n) s
 													val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
 													val rewInstr = OPER {assem=a,dst=d,src=s',jump=j}
@@ -240,7 +240,7 @@ struct
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
 			val _ = precoloredList := ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
-			val registers = [rv,"rbx",rcx,rdx,rsi,rdi,r8,r9,"r10","r11","r12","r13","r14","r15"]
+			val registers = [rv,"rbx",rcx,rdx,rsi,rdi,r8,r9,"r10","r11","r12","r13","r14","r15",fp]
 			val _ = registersSet := addList (empty, registers) 
 				
 			val _ = color := fillColor(!precoloredList,!color)			
