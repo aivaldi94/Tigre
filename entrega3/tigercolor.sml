@@ -27,6 +27,7 @@ struct
 	val freezeWorkSet = ref (emptyStr) (* temporales relacionados con moves y con grado menor a k --- freezeWorkSet: tigertemp.temp ref*)
 	val activeMoves = ref(emptyInt) (* moves que todavia no estan listos para ser unidos --- activeMoves: int Splayset.set ref*)
 	val moveSet = ref (tabNueva()) (*equivale a moveList del libro. pagina 243 --- moveSet: (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref *)
+	val frozenMoves = ref(emptyStr) (* moves que no van a ser considerasdos para coalescing nunca mas*)
 	(* FIN ESTRUCTURAS PARA COALESCE *)
 	
 	(*FUNCIONES PARA COALESCE*)    
@@ -81,8 +82,28 @@ struct
 							val uSet = add(emptyStr,u)
 						in (if cond then (freezeWorkSet := difference(!freezeWorkSet,uSet) ; simplifyWorkSet := union(!simplifyWorkSet,uSet)) else ()) end	
 	
-	(* freezeMoves : falta definir*)
-	fun freezeMoves n = ()
+	(* tempsInMove: int -> (tigertemp.temp,tigertemp.temp) toma un entero que representa una instruccion move y devuelve (src,dst) *)
+	(* funcion auxiliar que toma un entero que es el numero de instruccion y devuelve la tupla (src,dst) de un move *)
+	(* se usa para cuando el libro dice m (copy(x,y))*)
+	fun tempsInMove n = case buscoEnTabla (n,!natToInstr) of
+							MOVE {assem=_,dst=d,src=s} => (s,d)
+							| _ => raise Fail "tempsInMove no deberia pasar"
+							
+	(* freezeMoves : tigertemp.temp Splayset.set -> unit  REVISARRRRRRRRR*)
+	fun freezeMoves u = let
+							fun aux n = let
+											val nSet = add(emptyStr,n)
+											val (x,y) = (u,n)
+											val v = if getAlias(y) = getAlias u then getAlias(x) else getAlias(y)
+											val vSet = add(emptyStr,v)
+											val _ = activeMoves := difference(activeMoves,nSet)
+											val _ = frozenMoves := union (frozenMoves,nSet)
+											val cond = equal(nodeMoves(v),emptyStr) andalso (buscoEnTabla(v,!degree) < K)
+										    val _ =  if cond then (freezeWorkSet := union(freezeWorkSet,vSet);
+											                      simplifyWorkSet := union(simplifyWorkSet, vSet)) else ()
+									    in () end											
+							val _ = List.app aux nodeMoves(u)
+						in () end
 						
 	(* freeze: unit -> unit *)
 	fun freeze () = let
@@ -91,15 +112,6 @@ struct
 						val _ = freezeWorkSet := difference(!freezeWorkSet, uSet)
 						val _ = simplifyWorkSet := union(!simplifyWorkSet,uSet)
 					in freezeMoves(u) end
-	
-	
-	
-	(* tempsInMove: int -> (tigertemp.temp,tigertemp.temp) toma un entero que representa una instruccion move y devuelve (src,dst) *)
-	(* funcion auxiliar que toma un entero que es el numero de instruccion y devuelve la tupla (src,dst) de un move *)
-	(* se usa para cuando el libro dice m (copy(x,y))*)
-	fun tempsInMove n = case buscoEnTabla (n,!natToInstr) of
-							MOVE {assem=_,dst=d,src=s} => (s,d)
-							| _ => raise Fail "tempsInMove no deberia pasar"	
 							
 												  
     (*FIN FUNCIONES PARA COALESCE*)
