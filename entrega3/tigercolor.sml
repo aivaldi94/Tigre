@@ -326,9 +326,8 @@ struct
 			val _ = tigerbuild.build(l,printt)		
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
-			val _ = precoloredList := ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
+			val _ = precoloredList := ["rbx", sp,"rdi", "rsi", "rdx", "rcx", "r8", "r9", fp, "rax","r10","r11","r12","r13","r14","r15"]
 
-			val registers = [rv,"rbx",rcx,rdx,rsi,rdi,r8,r9,"r10","r11","r12","r13","r14","r15"]
 			val _ = registersSet := addList (emptyStr, registers) 
 				
 			val _ = color := fillColor(!precoloredList,!color)			
