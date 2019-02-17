@@ -59,14 +59,15 @@ struct
 		the CALL instructions in the Assem language have been annotated to define (interfere with) all the caller-save registers*)
 		
 		fun fillDefs i = case i of
-							OPER {assem=s,dst=d,src=_,jump=_} => let val isCall = String.isSubstring "call" s
+							OPER {assem=s,dst=d,src=_,jump=_} =>  addList (empty,d)	
+																(*let val isCall = String.isSubstring "call" s
 																	 val isPop = String.isSubstring "popq" s
 																	 val isPush = String.isSubstring "pushq" s
 																	 val callThen = addList (empty,"rsp"::callersaves)																	 
 																	 val popThen = addList (empty,"rsp"::d)
 																	 val pushThen = addList (empty, ["rsp"])
 																	 val genElse = addList (empty,d)																	  
-																 in if isCall then callThen else (if isPop then popThen else (if isPush then pushThen else genElse)) end
+																 in if isCall then callThen else (if isPop then popThen else (if isPush then pushThen else genElse)) end*)
 							| LABEL {assem=_,lab=_} => empty
 							| MOVE {assem=_,dst=d,src=_} => singleton String.compare d 
 								
@@ -77,12 +78,13 @@ struct
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		
 		fun fillUses i = case i of 
-							OPER {assem=a,dst=_,src=s,jump=_} => let val isPop = String.isSubstring "popq" a
+							OPER {assem=a,dst=_,src=s,jump=_} =>  addList (empty,s)		
+																(*let val isPop = String.isSubstring "popq" a
 																	 val isPush = String.isSubstring "pushq" a																	 
 																	 val popThen = addList (empty,["rsp"])
 																	 val pushThen = addList (empty, "rsp"::s)
 																	 val genElse = addList (empty,s)																	  
-																 in if isPop then popThen else (if isPush then pushThen else genElse) end
+																 in if isPop then popThen else (if isPush then pushThen else genElse) end*)
 							| LABEL {assem=_,lab=_} => empty
 							| MOVE {assem=_,dst=_,src=s} => singleton String.compare s
 								

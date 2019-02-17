@@ -23,8 +23,8 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
 						val fetchList = map fetch fetchTemps
 						val i = 1024
-						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp"],dst=[],jump=NONE},tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},OPER {assem="subq $"^its(i)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
-						val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},OPER {assem = "pop %'d0\n",src=[],dst=["rbp"],jump=NONE},OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
+						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},OPER {assem="subq $"^its(i)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
+						val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},OPER {assem = "pop %'d0\n",src=[sp],dst=["rbp",sp],jump=NONE},OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
 						val ret = OPER {assem = "ret\n",src=[],dst=[],jump=NONE}
 				   in  if isMain then prol@body@epil(*body@[ret]*) else prol@storeList@body@fetchList@epil end	
 				   
@@ -190,27 +190,27 @@ let
 		    
 	and munchArgs ((_,[]) : (int * exp list)) : unit = ()
 		| munchArgs (n,((TEMP x)::xs)) 		= ((if (n<6) then emit (tigerassem.MOVE {assem = "movq %'s0, %"^(natToReg n)^"\n",src=(munchExp (TEMP x)),dst=(natToReg n)}) 
-														 else emit (OPER {assem = "pushq %'s0\n",src=[x],dst=[],jump=NONE})); munchArgs(n+1,xs))
+														 else emit (OPER {assem = "pushq %'s0\n",src=[x,sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))
 		| munchArgs (n,((CONST i)::xs)) 	= ((if (n<6) then emit (OPER {assem = "movq $"^its(i)^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
-														 else emit (OPER {assem = "pushq $"^its(i)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))
+														 else emit (OPER {assem = "pushq $"^its(i)^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))
 		| munchArgs (n,((NAME l)::xs)) 		= ((if (n<6) then emit (OPER {assem = "movq $"^l^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
-														 else emit (OPER {assem = "pushq $"^l^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))
+														 else emit (OPER {assem = "pushq $"^l^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))
 		| munchArgs (n,(MEM(CONST i))::xs) 	= ((if (n<6) then emit (OPER {assem = "movq $"^its(i)^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
-														 else emit (OPER {assem = "pushq $"^its(i)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))										
+														 else emit (OPER {assem = "pushq $"^its(i)^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))										
 		| munchArgs (n,(MEM e)::xs) 		= ((if (n<6) then emit (OPER {assem = "movq (%'s0), %"^(natToReg n)^"\n",src=[munchExp e],dst=[natToReg n],jump=NONE}) 
-										                 else emit (OPER {assem = "pushq (%'s0)\n",src=[munchExp e],dst=[],jump=NONE})); munchArgs(n+1,xs))
+										                 else emit (OPER {assem = "pushq (%'s0)\n",src=[munchExp e,sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))
 		
 
 
 
         | munchArgs (n,(BINOP(PLUS,CONST i,CONST j)::xs)) = 	((if (n<6) then emit (OPER {assem = "movq $"^its(i+j)^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
-										                 else emit (OPER {assem = "pushq $"^its(i+j)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))
+										                 else emit (OPER {assem = "pushq $"^its(i+j)^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))
 	    | munchArgs (n,(BINOP(MINUS,CONST i,CONST j)::xs)) = 	((if (n<6) then emit (OPER {assem = "movq $"^its(i-j)^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
-										                 else emit (OPER {assem = "pushq $"^its(i-j)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))			
+										                 else emit (OPER {assem = "pushq $"^its(i-j)^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))			
 		| munchArgs (n,(BINOP(MUL,CONST i,CONST j)::xs)) = 	((if (n<6) then emit (OPER {assem = "movq $"^its(i*j)^", %"^(natToReg n)^"\n",src=[],dst=[natToReg n],jump=NONE}) 
-										                 else emit (OPER {assem = "pushq $"^its(i*j)^"\n",src=[],dst=[],jump=NONE})); munchArgs(n+1,xs))	
+										                 else emit (OPER {assem = "pushq $"^its(i*j)^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs))	
 		| munchArgs (n,(BINOP(DIV,e1,e2))::xs) = ((if (n<6) then emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; movq %rax, %"^(natToReg n)^"\n",src=[munchExp e1,munchExp e2, tigerframe.rv],dst=[tigerframe.rv,tigerframe.rdx,natToReg n],jump=NONE}) 
-		                                                    else emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; pushq %rax\n",src=[munchExp e1,munchExp e2, tigerframe.rv],dst=[tigerframe.rv,tigerframe.rdx],jump=NONE})))								                 							                 					
+		                                                    else emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; pushq %rax\n",src=[munchExp e1,munchExp e2, tigerframe.rv,sp],dst=[tigerframe.rv,tigerframe.rdx,sp],jump=NONE})))								                 							                 					
 
 
 
@@ -218,19 +218,19 @@ let
                                                                               emit (OPER {assem ="addq %'s0, %'d0\n",src=[munchExp e1,natToReg n], dst=[natToReg n],jump=NONE}))
 								 else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[t], dst=[r],jump=NONE});
 	                                                                                      emit (OPER {assem ="addq %'s0, %'d0\n",src=[munchExp e1,r], dst=[r],jump=NONE});
-									                       emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))
+									                       emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))
 													
 		| munchArgs (n,(BINOP(MUL,TEMP t,e1))::xs) = ((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[t], dst=[natToReg n],jump=NONE});
                                                                               emit (OPER {assem ="imul %'s0, %'d0\n",src=[munchExp e1,natToReg n], dst=[natToReg n],jump=NONE}))
 								 else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[t], dst=[r],jump=NONE});
 	                                                                                      emit (OPER {assem ="imul %'s0, %'d0\n",src=[munchExp e1,r], dst=[r],jump=NONE});
-									                       emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))
+									                       emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))
  
 		| munchArgs (n,(BINOP(MINUS,TEMP t,e1))::xs) = ((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[t], dst=[natToReg n],jump=NONE});
                                                                               emit (OPER {assem ="subq %'s0, %'d0\n",src=[munchExp e1,natToReg n], dst=[natToReg n],jump=NONE}))
 								 else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[t], dst=[r],jump=NONE});
 	                                                                                      emit (OPER {assem ="subq %'s0, %'d0\n",src=[munchExp e1,r], dst=[r],jump=NONE});
-									                       emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))
+									                       emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))
 
 
 
@@ -239,35 +239,35 @@ let
                                                                               emit (OPER {assem ="addq %'s0, %'d0\n",src=[t,natToReg n], dst=[natToReg n],jump=NONE}))
 								 else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[r],jump=NONE});
 	                                                                                      emit (OPER {assem ="addq %'s0, %'d0\n",src=[t,r], dst=[r],jump=NONE});
-									                       emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))
+									                       emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))
 													
 		| munchArgs (n,(BINOP(MUL,e1,TEMP t))::xs) =((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[natToReg n],jump=NONE});
                                                                               emit (OPER {assem ="imul %'s0, %'d0\n",src=[t,natToReg n], dst=[natToReg n],jump=NONE}))
 								 else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[r],jump=NONE});
 	                                                                                      emit (OPER {assem ="imul %'s0, %'d0\n",src=[t,r], dst=[r],jump=NONE});
-									                       emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))
+									                       emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))
 													
 		| munchArgs (n,(BINOP(MINUS,e1,TEMP t))::xs) = ((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[natToReg n],jump=NONE});
                                                                               emit (OPER {assem ="subq %'s0, %'d0\n",src=[t,natToReg n], dst=[natToReg n],jump=NONE}))
 								 else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[r],jump=NONE});
 	                                                                                      emit (OPER {assem ="subq %'s0, %'d0\n",src=[t,r], dst=[r],jump=NONE});
-									                       emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))		
+									                       emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))		
 
         | munchArgs (n,(BINOP(PLUS, e1,e2))::xs) =  ((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e2], dst=[natToReg n],jump=NONE});
                                                                      emit (OPER {assem ="addq %'s0, %'d0\n",src=[munchExp e1,natToReg n], dst=[natToReg n],jump=NONE}))
 								                     else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e2], dst=[r],jump=NONE});
 	                                                                         emit (OPER {assem ="addq %'s0, %'d0\n",src=[munchExp e1,r], dst=[r],jump=NONE});
-									                                         emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))		
+									                                         emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))		
 		| munchArgs (n,(BINOP(MINUS, e1,e2))::xs) =  ((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[natToReg n],jump=NONE});
                                                                      emit (OPER {assem ="subq %'s0, %'d0\n",src=[munchExp e2,natToReg n], dst=[natToReg n],jump=NONE}))
 								                     else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e1], dst=[r],jump=NONE});
 	                                                                         emit (OPER {assem ="subq %'s0, %'d0\n",src=[munchExp e2,r], dst=[r],jump=NONE});
-									                                         emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))
+									                                         emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))
 		| munchArgs (n,(BINOP(MUL, e1,e2))::xs) =  ((if (n<6) then (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e2], dst=[natToReg n],jump=NONE});
                                                                      emit (OPER {assem ="imul %'s0, %'d0\n",src=[munchExp e1,natToReg n], dst=[natToReg n],jump=NONE}))
 								                     else ((result (fn r => (emit (OPER {assem="movq %'s0, %'d0\n",src=[munchExp e2], dst=[r],jump=NONE});
 	                                                                         emit (OPER {assem ="imul %'s0, %'d0\n",src=[munchExp e1,r], dst=[r],jump=NONE});
-									                                         emit (OPER{assem="pushq %'s0\n",src=[r],dst=[],jump=NONE}))));()));munchArgs(n+1,xs))							                                         							                                         																	
+									                                         emit (OPER{assem="pushq %'s0\n",src=[r,sp],dst=[sp],jump=NONE}))));()));munchArgs(n+1,xs))							                                         							                                         																	
 		
 		| munchArgs (n,xs) 					= ((List.app (print o tigerit.treeExp) xs);())(*(print("el n es:"^its(n)^"\n"^"la lista long: "^its(List.length(xs))^"\n");(raise Fail "No hay mas casos (munchArgs)"))*)
 		
