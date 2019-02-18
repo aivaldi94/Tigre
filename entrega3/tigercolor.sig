@@ -1,6 +1,26 @@
 signature tigercolor =
 sig
 
+(* ESTRUCTURAS PARA COALESCE*)
+(*
+(* intrucciones moves que pueden ser coaleasced --- workSetMoves: int Splayset.set ref *)
+val workSetMoves = ref (emptyInt) 
+ (* cuando un move (a,b) se une, v se pone en coalescedNodes y alias(v) = u --- alias: (tigertemp.temp, tigertemp.temp) tigertab.Tabla ref *)
+val alias = ref (tabNueva())
+ (* temporales que han sido unidos, si tengo move (v,u) entonces v se une a este conjunto y u es puesto en alguna work list o viceversa --- coalescedNodes: tigertemp.temp Splayset.set ref*) 
+val coalescedNodes = ref(emptyStr)
+(* temporales relacionados con moves y con grado menor a k --- freezeWorkSet: tigertemp.temp ref*)
+val freezeWorkSet = ref (emptyStr) 
+(* moves que todavia no estan listos para ser unidos --- activeMoves: int Splayset.set ref*)
+val activeMoves = ref(emptyInt) 
+(*equivale a moveList del libro. pagina 243 --- moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref *)
+val moveSet = ref (tabNueva()) 
+(* moves que no van a ser considerasdos para coalescing nunca mas*)
+val frozenMoves = ref(emptyInt) 
+ (* conjunto de todos los temporales existentes*)
+val setOfAllTemps = ref(emptyStr)
+(* FIN ESTRUCTURAS PARA COALESCE *)
+*)
 (* selectStack: pila que contiene los temporales eliminados del grafo *)		
 val selectStack : tigertemp.temp list ref		
 
@@ -34,7 +54,7 @@ val getDegree : tigertemp.temp -> int
 val fillSimplifyWorkSet : unit -> tigertemp.temp Splayset.set
 
 (* decrementDegree: dado un conjunto de temporales hace lo que pide el libro pagina 246*)
-val decrementDegree: tigertemp.temp Splayset.set -> tigertemp.temp Splayset.set
+val decrementDegree: tigertemp.temp Splayset.set -> unit
 
 (* simplify: libro pagina 246*)
 val simplify: unit -> unit
@@ -46,7 +66,7 @@ val fillColor: (tigertemp.temp list * (tigertemp.temp ,tigertemp.temp) tigertab.
 val selectSpill : unit -> unit
 
 (* repeatDo: funcion que implementa la parte de repeat until de la pagina 244*)
-val repeatDo : unit -> unit
+val repeatDo : (int * int * int * int) -> unit
 
 (* repeatUntil: funcion que implementa la parte de repeat until de la pagina 244*)
 val repeatUntil : unit -> unit
