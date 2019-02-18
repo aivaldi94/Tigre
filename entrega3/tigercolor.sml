@@ -20,27 +20,22 @@ struct
 	val spilledNodes = ref ([])
 	val registersSet = ref(emptyStr)
 	
-	(* ESTRUCTURAS PARA COALESCE*)
-
-	val alias = ref (tabNueva()) (* cuando un move (a,b) se une, v se pone en coalescedNodes y alias(v) = u --- alias: (tigertemp.temp, tigertemp.temp) tigertab.Tabla ref *)
-	val coalescedNodes = ref(emptyStr) (* temporales que han sido unidos, si tengo move (v,u) entonces v se une a este conjunto y u es puesto en alguna work list o viceversa --- coalescedNodes: tigertemp.temp Splayset.set ref*) 
-	val coalescedMoves = ref(emptyInt) (* moves que han sido unidos *)
-	val constrainedMoves = ref(emptyInt) (* moves cuya fuente y destino interfieren *)
-	val freezeWorkSet = ref (emptyStr) (* temporales relacionados con moves y con grado menor a k --- freezeWorkSet: tigertemp.temp ref*)
-	val activeMoves = ref(emptyInt) (* moves que todavia no estan listos para ser unidos --- activeMoves: int Splayset.set ref*)
+	val alias = ref (tabNueva()) 
+	val coalescedNodes = ref(emptyStr) 
+	val coalescedMoves = ref(emptyInt) 
+	val constrainedMoves = ref(emptyInt) 
+	val freezeWorkSet = ref (emptyStr) 
+	val activeMoves = ref(emptyInt) 
+	val frozenMoves = ref(emptyInt) 
+	val setOfAllTemps = ref(emptyStr) 
 	
-	val frozenMoves = ref(emptyInt) (* moves que no van a ser considerasdos para coalescing nunca mas*)
-	val setOfAllTemps = ref(emptyStr) (* conjunto de todos los temporales existentes*)
-	(* FIN ESTRUCTURAS PARA COALESCE *)
 
 	fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
 											NONE => emptyInt
 											| SOME c => c)
 											
-	(* nodeMoves: tigertemp.temp -> tigertemp.temp Splayset.set*)
     fun nodeMoves n = intersection (findSet(n,!moveSet), union(!activeMoves,!workSetMoves))
 
-	(* enableMoves: tigertemp.temp Splayset.set -> unit *)
     fun enableMoves nodes = let 
 								val nList = listItems(nodes)
 								val l1 = map nodeMoves nList (* (int Splayset.set ) list*)
@@ -81,31 +76,22 @@ struct
 								val _ = simplifyWorkSet := union (!simplifyWorkSet,adjNoMoveRelated)															
 								
 								in () end 
-	(*FUNCIONES PARA COALESCE*)    
-    (* getAlias: tigertemp.temp -> tigertemp.temp *)
+	
     fun getAlias (t) = if member(!coalescedNodes,t) then getAlias(buscoEnTabla(t,!alias)) else t        
             
-    
-    (* moveRelated: tigertemp.temp -> bool *)
-    (* nuestro moveRelated es un conjunto donde estan todos los nodos involucrados en un move, aca determina si un nodo en especial todavia tiene que ver con un move o no *)
     fun moveRelatedFun n = equal(nodeMoves(n),emptyInt) 
         
     
-    (* areAdj: (tigertemp.temp * tigertemp.temp) -> bool*)
     fun areAdj (t1,t2) = member(buscoEnTabla(t1,!interf),t2)
     
-    (* ok: (tigertemp.temp * tigertemp.temp) -> bool *)
     fun ok (t,r) = (buscoEnTabla(t,!degree) < K) orelse member(!precoloredSet,t) orelse areAdj (t,r)
     
-    (* fillFreezeWorkSet: unit-> tigertemp.temp Splayset.set*)
     fun fillFreezeWorkSet () = let 
 								val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),!degree))								
 							   in addList (!moveRelated,lowDegreeList) end
 							   
-	(* conservative: tigertemp.temp list -> bool*)
 	fun conservative nodes = length(List.filter (fn n => (buscoEnTabla(n,!degree) >= K)) (listItems nodes)) < K
 	
-	(* addWorkList: tigertemp.temp -> unit *)
 	fun addWorkList u = let 
 							val c1 = not (member (!precoloredSet,u))
 							val c2 = not ((member (!moveRelated, u)) andalso (buscoEnTabla(u,!degree) < K))
@@ -113,14 +99,11 @@ struct
 							val uSet = add(emptyStr,u)
 						in (if cond then (freezeWorkSet := difference(!freezeWorkSet,uSet) ; simplifyWorkSet := union(!simplifyWorkSet,uSet)) else ()) end	
 	
-	(* tempsInMove: int -> (tigertemp.temp,tigertemp.temp) toma un entero que representa una instruccion move y devuelve (src,dst) *)
-	(* funcion auxiliar que toma un entero que es el numero de instruccion y devuelve la tupla (src,dst) de un move *)
-	(* se usa para cuando el libro dice m (copy(x,y))*)
+	
 	fun tempsInMove n = case buscoEnTabla (n,!natToInstr) of
 							MOVE {assem=_,dst=d,src=s} => (s,d)
 							| _ => raise Fail "tempsInMove no deberia pasar"
-												
-	(*freezeMoves : tigertemp.temp Splayset.set -> unit  *)
+
 	fun freezeMoves u = let
 							fun aux n = let
 											val nSet = add(emptyInt,n)
@@ -138,7 +121,6 @@ struct
 						in () end
 						  										
     
-	(*addEdge: (tigertemp.temp,tigertemp.temp) -> unit --- distinto al libro por diferente implementacion de interf *)
 	fun addEdge (u,v) = let
 							val vSet = Splayset.singleton String.compare v 
 							val uSet = Splayset.singleton String.compare u
@@ -146,7 +128,7 @@ struct
 												  interf := tabRInserta(v,union(buscoEnTabla(u,!interf),uSet),!interf);
 						                          degree := tabRInserta(u,buscoEnTabla(u,!degree)+1,!degree);
 						                          degree := tabRInserta(v,buscoEnTabla(v,!degree)+1,!degree))) end
-	(*Combine: (tigertemp.temp, tigertemp.temp ) -> unit *)						
+				
 	fun combine (u,v) = let 
 							val vSet = Splayset.singleton String.compare v
 							val uSet = Splayset.singleton String.compare u
@@ -162,7 +144,7 @@ struct
 												 spillWorkSet := union(!spillWorkSet,uSet)) else ()
 						in () end 	
 												  
-    (*FIN FUNCIONES PARA COALESCE*)
+    
     
 	fun getDegree t = buscoEnTabla (t,!degree)
 		
