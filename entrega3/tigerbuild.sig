@@ -42,6 +42,10 @@ val liveOut : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
 val liveIn : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
 (* conjunto de temps relacionados con moves *)
 val moveRelated : tigertemp.temp Splayset.set ref
+
+val workSetMoves: int Splayset.set ref
+
+val moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref
 (* tabla de interferencias *)
 val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
 (*dado un temporal, devuelve true si pertenece al conjunto de moveRelated*)

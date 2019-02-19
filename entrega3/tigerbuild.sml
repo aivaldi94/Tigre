@@ -10,6 +10,8 @@ struct
 	fun id x = x
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
 
+	val emptyStr = empty String.compare														
+	val emptyInt = empty Int.compare	
 	val empty = empty String.compare 
 	
 	(*Estructuras*)
@@ -22,6 +24,9 @@ struct
 	val liveOut = ref (tabNueva())
 	val interf = ref (tabNueva())
 	val moveRelated = ref empty
+	val workSetMoves = ref (emptyInt) (* intrucciones moves que pueden ser coaleasced *)
+	val moveSet = ref (tabNueva()) (*equivale a moveList del libro. pagina 243  *)
+	
 	(*--------------*)
 
 	(* 
@@ -231,8 +236,9 @@ struct
 														
 		val _ = moveRelated := fillMoveRelated (!longNatToInstr)
 				
-	(* ---------------------------------------------------------------------------------------------------------- *)			
 
+	(* ---------------------------------------------------------------------------------------------------------- *)			
+													
 		fun fillInterf (~1,tab) = tab							
 			| fillInterf (n,tab) = let
 									val i = buscoEnTabla (n, !natToInstr)
@@ -280,7 +286,31 @@ struct
 								end		
 
 		val _ = interf := fillInterf(!longNatToInstr,tabNueva())
-		val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf)) else ()
+		
+	(* ---------------------------------------------------------------------------------------------------------- *)			
+
+	(* fillMoves: (instr list, int,tigertemp.temp Splayset.set, (tigertemp.temp, tigertemp.temp) tigertab.Tabla) ->  (tigertemp.temp Splayset.set, (tigertemp.temp, tigertemp.temp) tigertab.Tabla) ??? conviene el numero de instruccion o mejor (src,dst,numero)????*)
+    (* esta funcion llena tanto el conjunto que contiene el n° de instrucciones que son moves como la tabla a la que a cada temp le corresponde el conjunto de n° de instrucciones donde este interviene en un move*)
+    fun fillMoves (_,~1,sMoves,tabMoves) = (sMoves,tabMoves)
+		| fillMoves ((i::xs),n,sMoves,tabMoves) = case i of 
+													MOVE {assem=_,dst=d,src=s} => (let 
+																						fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
+																										NONE => emptyInt
+																										| SOME c => c)
+																						val nSet = add(emptyInt,(!longNatToInstr) - n)
+																						val dSet = findSet(d,tabMoves)																									
+																						val sSet = findSet (s,tabMoves)																						
+																						val sMoves' = if member(buscoEnTabla(s,!interf),d) then sMoves else union(sMoves, nSet)
+																						val tabMoves' = tabRInserta(d,union(dSet,nSet),tabRInserta(s,union(sSet,nSet),tabMoves))
+																					in fillMoves(xs,n-1,sMoves',tabMoves') end)
+													| _ => fillMoves(xs,n-1,sMoves,tabMoves)
+
+	val (workSetMoves',moveSet') = fillMoves (instrList,!longNatToInstr,emptyInt,tabNueva())
+	val _ = workSetMoves := workSetMoves'
+	val _ = moveSet := moveSet'
+	val _ = (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n))) (listItems (!workSetMoves)))
+			
+	val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf)) else ()
 		   
 	in print("ok build\n") end	 
 end

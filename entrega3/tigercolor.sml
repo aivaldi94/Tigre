@@ -20,98 +20,30 @@ struct
 	val spilledNodes = ref ([])
 	val registersSet = ref(emptyStr)
 	
-	(* ESTRUCTURAS PARA COALESCE*)
-	val workSetMoves = ref (emptyInt) (* intrucciones moves que pueden ser coaleasced --- workSetMoves: int Splayset.set ref *)
-	val alias = ref (tabNueva()) (* cuando un move (a,b) se une, v se pone en coalescedNodes y alias(v) = u --- alias: (tigertemp.temp, tigertemp.temp) tigertab.Tabla ref *)
-	val coalescedNodes = ref(emptyStr) (* temporales que han sido unidos, si tengo move (v,u) entonces v se une a este conjunto y u es puesto en alguna work list o viceversa --- coalescedNodes: tigertemp.temp Splayset.set ref*) 
-	val freezeWorkSet = ref (emptyStr) (* temporales relacionados con moves y con grado menor a k --- freezeWorkSet: tigertemp.temp ref*)
-	val activeMoves = ref(emptyInt) (* moves que todavia no estan listos para ser unidos --- activeMoves: int Splayset.set ref*)
-	val moveSet = ref (tabNueva()) (*equivale a moveList del libro. pagina 243 --- moveSet: (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref *)
-	(* FIN ESTRUCTURAS PARA COALESCE *)
+	val alias = ref (tabNueva()) 
+	val coalescedNodes = ref(emptyStr) 
+	val coalescedMoves = ref(emptyInt) 
+	val constrainedMoves = ref(emptyInt) 
+	val freezeWorkSet = ref (emptyStr) 
+	val activeMoves = ref(emptyInt) 
+	val frozenMoves = ref(emptyInt) 
+	val setOfAllTemps = ref(emptyStr) 
 	
-	(*FUNCIONES PARA COALESCE*)    
-    (* getAlias: tigertemp.temp -> tigertemp.temp *)
-    fun getAlias (t) = if member(!coalescedNodes,t) then getAlias(buscoEnTabla(t,!alias)) else t
-    
-    (* fillMoves: (instr list, int,tigertemp.temp Splayset.set, (tigertemp.temp, tigertemp.temp) tigertab.Tabla) ->  (tigertemp.temp Splayset.set, (tigertemp.temp, tigertemp.temp) tigertab.Tabla) ??? conviene el numero de instruccion o mejor (src,dst,numero)????*)
-    (* esta funcion llena tanto el conjunto que contiene el n° de instrucciones que son moves como la tabla a la que a cada temp le corresponde el conjunto de n° de instrucciones donde este interviene en un move*)
-    fun fillMoves (_,0,sMoves,tabMoves) = (sMoves,tabMoves)
-		| fillMoves ((i::xs),n,sMoves,tabMoves) = case i of 
-													OPER {assem=_,dst=_,src=s,jump=_} => fillMoves(xs,n-1,sMoves,tabMoves) 
-													| LABEL {assem=_,lab=_} => fillMoves(xs,n-1,sMoves,tabMoves) 
-													| MOVE {assem=_,dst=d,src=s} => (let 
-																						val nSet = add(emptyInt,n)
-																						val sMoves' = if member(buscoEnTabla(s,!interf),d) then sMoves else union(sMoves, nSet)
-																						val tabMoves' = tabRInserta(d,n,tabRInserta(s,n,tabMoves))
-																					in fillMoves(xs,n-1,sMoves',tabMoves') end)
-    
-    (* nodeMoves: tigertemp.temp -> tigertemp.temp Splayset.set*)
-    fun nodeMoves n = intersection (buscoEnTabla(n,!moveSet), union(!activeMoves,!workSetMoves))
-    
-    (* moveRelated: tigertemp.temp -> bool *)
-    (* nuestro moveRelated es un conjunto donde estan todos los nodos involucrados en un move, aca determina si un nodo en especial todavia tiene que ver con un move o no *)
-    fun moveRelatedFun n = equal(nodeMoves(n),emptyInt) 
-    
-    (* enableMoves: tigertemp.temp Splayset.set -> unit *)
+
+	fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
+											NONE => emptyInt
+											| SOME c => c)
+											
+    fun nodeMoves n = intersection (findSet(n,!moveSet), union(!activeMoves,!workSetMoves))
+
     fun enableMoves nodes = let 
 								val nList = listItems(nodes)
-								val l1 = map nodeMoves nList (* (tigertemp.temp Splayset.set ) list*)
+								val l1 = map nodeMoves nList (* (int Splayset.set ) list*)
 								val l2 = map (fn n => intersection (n,!activeMoves)) l1 
 							in List.app (fn n => (activeMoves := difference(!activeMoves,n); workSetMoves := union (!workSetMoves, n))) l2 end
-    
-    (* areAdj: (tigertemp.temp * tigertemp.temp) -> bool*)
-    fun areAdj (t1,t2) = member(buscoEnTabla(t1,!interf),t2)
-    
-    (* ok: (tigertemp.temp * tigertemp.temp) -> bool *)
-    fun ok (t,r) = (buscoEnTabla(t,!degree) < K) orelse member(!precoloredSet,t) orelse areAdj (t,r)
-    
-    (* fillFreezeWorkSet: unit-> tigertemp.temp Splayset.set*)
-    fun fillFreezeWorkSet () = let 
-								val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),!degree))								
-							   in addList (!moveRelated,lowDegreeList) end
-							   
-	(* conservative: tigertemp.temp list -> bool*)
-	fun conservative xs = length(List.filter (fn n => (buscoEnTabla(n,!degree) >= K)) xs) < K
-	
-	(* addWorkList: tigertemp.temp -> unit *)
-	fun addWorkList u = let 
-							val c1 = not (member (!precoloredSet,u))
-							val c2 = not ((member (!moveRelated, u)) andalso (buscoEnTabla(u,!degree) < K))
-							val cond = c1 andalso c2
-							val uSet = add(emptyStr,u)
-						in (if cond then (freezeWorkSet := difference(!freezeWorkSet,uSet) ; simplifyWorkSet := union(!simplifyWorkSet,uSet)) else ()) end	
-	
-	(* freezeMoves : falta definir*)
-	fun freezeMoves n = ()
-						
-	(* freeze: unit -> unit *)
-	fun freeze () = let
-						val u = hd (listItems(!freezeWorkSet))
-						val uSet = add(emptyStr,u)
-						val _ = freezeWorkSet := difference(!freezeWorkSet, uSet)
-						val _ = simplifyWorkSet := union(!simplifyWorkSet,uSet)
-					in freezeMoves(u) end
-	
-	
-	
-	(* tempsInMove: int -> (tigertemp.temp,tigertemp.temp) toma un entero que representa una instruccion move y devuelve (src,dst) *)
-	(* funcion auxiliar que toma un entero que es el numero de instruccion y devuelve la tupla (src,dst) de un move *)
-	(* se usa para cuando el libro dice m (copy(x,y))*)
-	fun tempsInMove n = case buscoEnTabla (n,!natToInstr) of
-							MOVE {assem=_,dst=d,src=s} => (s,d)
-							| _ => raise Fail "tempsInMove no deberia pasar"	
 							
-												  
-    (*FIN FUNCIONES PARA COALESCE*)
-    
-	fun getDegree t = buscoEnTabla (t,!degree)
-		
-	fun fillSimplifyWorkSet () = let
-									val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),(!degree)))
-									(*val nonMoveRelSet = difference (setOfAllTemps, !tMoveRel)*)
-									(* agregar para coalese y spill in addList (nonMoveRelSet,lowDegreeList) end*)
-								 in addList (emptyStr,lowDegreeList) end
-													  
+	 fun adjacent n = difference(buscoEnTabla (n,!interf),union(addList(emptyStr,!selectStack),!coalescedNodes))
+	 
 	fun minusOneSet s x = x-1 
 														
 	fun decrementDegree (s) = let 								
@@ -125,53 +57,169 @@ struct
 								fun minusOne n = case tabBusca(n,!degree) of
 													NONE => raise Fail "No deberia pasar minusOne"
 													| SOME i => i-1
-								val _ = map (fn n => tabRInserta (n,minusOne n,!degree)) listTemps
+								
+								fun f (tmp, t) = tabRInserta (tmp,minusOne tmp,t) 					
+								val _ = degree := List.foldl f (!degree) listTemps
+								
 								(*elimino del conjunto spillWorkSet los elementos de listKNeig*)
 								val setKNeig = addList(emptyStr,listKNeig)
+								
+								val activarMoves = List.foldl (fn (n,set) =>union(adjacent(n),set)) setKNeig listKNeig
+								val _ = enableMoves (activarMoves)
+								
 								val _ = spillWorkSet := difference (!spillWorkSet,setKNeig)
-								(*llamo a la funcion*)
-								(*val _ = enableMoves (setKNeig)*)
-								(* para cada temp del conjunto evaluo lo que hace aux *)
-								(*
-								fun aux n = if isMoveRelated n then freezeWorkSet := add (!freezeWorkSet,n)
-															   else simplifyWorkSet := add (!simplifyWorkSet,n)
-								val _ = Splayset.app aux setKNeig
-								*)
-								in addList(emptyStr,listKNeig) end 
+								
+								val adjMoveRelated = intersection (!moveRelated, setKNeig)
+								val adjNoMoveRelated = difference (setKNeig, adjMoveRelated)
+								
+								val _ = freezeWorkSet := union(!freezeWorkSet,adjMoveRelated)
+								val _ = simplifyWorkSet := union (!simplifyWorkSet,adjNoMoveRelated)															
+								
+								in () end 
+	
+    fun getAlias (t) = if member(!coalescedNodes,t) then getAlias(buscoEnTabla(t,!alias)) else t        
+            
+    fun moveRelatedFun n = equal(nodeMoves(n),emptyInt) 
+        
+    
+    fun areAdj (t1,t2) = member(buscoEnTabla(t1,!interf),t2)
+    
+    fun ok (t,r) = (buscoEnTabla(t,!degree) < K) orelse member(!precoloredSet,t) orelse areAdj (t,r)
+    
+    fun fillFreezeWorkSet () = let 
+								val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),!degree))								
+							   in addList (!moveRelated,lowDegreeList) end
+							   
+	fun conservative nodes = length(List.filter (fn n => (buscoEnTabla(n,!degree) >= K)) (listItems nodes)) < K
+	
+	fun addWorkList u = let 
+							val c1 = not (member (!precoloredSet,u))
+							val c2 = not ((member (!moveRelated, u)) andalso (buscoEnTabla(u,!degree) < K))
+							val cond = c1 andalso c2
+							val uSet = add(emptyStr,u)
+						in (if cond then (freezeWorkSet := difference(!freezeWorkSet,uSet) ; simplifyWorkSet := union(!simplifyWorkSet,uSet)) else ()) end	
+	
+	
+	fun tempsInMove n = case buscoEnTabla (n,!natToInstr) of
+							MOVE {assem=_,dst=d,src=s} => (s,d)
+							| _ => raise Fail "tempsInMove no deberia pasar"
+
+	fun freezeMoves u = let
+							fun aux n = let
+											val nSet = add(emptyInt,n)
+											val _ = print ("freezeMoves")
+											val (x,y) = tempsInMove n (*NO SABEMOS ORDEN CORRECTO *)
+											val v = if getAlias(y) = getAlias u then getAlias(x) else getAlias(y)
+											val vSet = add(emptyStr,v)
+											val _ = activeMoves := difference(!activeMoves,nSet)
+											val _ = frozenMoves := union (!frozenMoves,nSet)
+											val cond = equal(nodeMoves(v),emptyInt) andalso (buscoEnTabla(v,!degree) < K)
+										    val _ =  if cond then (freezeWorkSet := difference(!freezeWorkSet,vSet);
+											                      simplifyWorkSet := union(!simplifyWorkSet, vSet)) else ()
+									    in () end											
+							val _ = Splayset.app aux (nodeMoves(u))
+						in () end
+						  										
+    
+	fun addEdge (u,v) = let
+							val vSet = Splayset.singleton String.compare v 
+							val uSet = Splayset.singleton String.compare u
+						in (if u = v then () else (interf := tabRInserta(u,union(buscoEnTabla(v,!interf),vSet),!interf);
+												  interf := tabRInserta(v,union(buscoEnTabla(u,!interf),uSet),!interf);
+						                          degree := tabRInserta(u,buscoEnTabla(u,!degree)+1,!degree);
+						                          degree := tabRInserta(v,buscoEnTabla(v,!degree)+1,!degree))) end
+				
+	fun combine (u,v) = let 
+							val vSet = Splayset.singleton String.compare v
+							val uSet = Splayset.singleton String.compare u
+							val _ = if member (!freezeWorkSet, v) then freezeWorkSet := difference (!freezeWorkSet, vSet) else spillWorkSet := difference (!spillWorkSet,vSet)
+							val _ = coalescedNodes := union (!coalescedNodes,vSet)
+							val _ = alias := tabRInserta (v,u,!alias)
+							val _ = moveSet := tabRInserta(u,union(buscoEnTabla(u,!moveSet),buscoEnTabla(v,!moveSet)),!moveSet)
+							val adj = adjacent (v)
+							val _ = Splayset.app (fn t => addEdge(t,u)) adj
+							val _ = decrementDegree(adj)
+							val cond = (buscoEnTabla(u,!degree) >= K) andalso member(!freezeWorkSet,u)
+							val _ = if cond then (freezeWorkSet := delete (!freezeWorkSet,u);
+												 spillWorkSet := union(!spillWorkSet,uSet)) else ()
+						in () end 	
+												  
+    
+    
+	fun getDegree t = buscoEnTabla (t,!degree)
+		
+	fun fillSimplifyWorkSet () = let
+									val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),(!degree)))									
+									val lowDegreeSet = addList(emptyStr,lowDegreeList)
+									val nonMoveRelSet = difference (!setOfAllTemps, !moveRelated)
+									(* Agregado para COALESCE *)
+								 in intersection (lowDegreeSet,nonMoveRelSet) end								 
+								(* sin coalesce in addList(emptyStr,lowDegreeList) end *)													  								
 								
 
 	fun fillColor ([],c) = c
 	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
-	  												
-	fun selectSpill () = let
+	  														
+	
+	fun simplify () = case (numItems(!simplifyWorkSet)) of 
+								0 => repeatUntil()
+								| _ => (let val n = hd(listItems (!simplifyWorkSet))
+											val _ = simplifyWorkSet := delete(!simplifyWorkSet,n)
+											val _ = selectStack := !selectStack @ [n]															
+											val adjN = adjacent n
+											val _ = decrementDegree (adjN)											
+											in  simplify () end)
+	and coalesce ()	= let 
+						val m = hd (listItems(!workSetMoves))
+						val mSet = Splayset.singleton Int.compare m
+						val _ = print("coalsece")
+						val (x',y') = tempsInMove m (*NO SABEMOS ORDEN CORRECTO *)
+						val x = buscoEnTabla(x',!alias)
+						val y = buscoEnTabla(y',!alias)
+						val (u,v) = if member(!precoloredSet,y) then (y,x) else (x,y)
+						val _ = workSetMoves := delete (!workSetMoves,m)
+						val cond1 = member(!precoloredSet,v) orelse areAdj(u,v)
+						val adjV = adjacent(v)
+						val adjU = adjacent(u)
+						val allAreOk = List.foldl (fn (b1,b2) => b1 andalso b2) true (List.map (fn t => ok(t,u)) (listItems adjV))
+						val uIsMember = member(!precoloredSet,u)
+						val cond2 = (uIsMember andalso allAreOk) orelse ((not uIsMember) andalso conservative(union(adjV,adjU)))
+						val _ = if (u = v) then (coalescedMoves := union(!coalescedMoves,mSet);
+												 addWorkList(u)) else (if cond1 then (constrainedMoves := union(!constrainedMoves,mSet);
+																					 addWorkList(u); addWorkList(v)) else (if cond2 then (coalescedMoves := union (!coalescedMoves,mSet);
+																																		  combine(u,v); addWorkList(u)) else activeMoves := union(!activeMoves,mSet)))						
+					  in repeatUntil() end
+    
+    and freeze () = let
+						val u = hd (listItems(!freezeWorkSet))
+						val uSet = add(emptyStr,u)
+						val _ = freezeWorkSet := difference(!freezeWorkSet, uSet)
+						val _ = simplifyWorkSet := union(!simplifyWorkSet,uSet)
+						val _ = freezeMoves(u)
+					 in repeatUntil() end
+  												
+	and selectSpill () = let
 							val m = hd(listItems (!spillWorkSet))
 							val _ = spillWorkSet := difference (!spillWorkSet,add(emptyStr,m))
 							val _ = simplifyWorkSet := union (!simplifyWorkSet,add(emptyStr,m))
+							val _ = freezeMoves(m)
 						in repeatUntil() end
-	
-	and simplify () = case (numItems(!simplifyWorkSet)) of 
-								0 => repeatUntil()
-								| _ => (let val n = hd(listItems (!simplifyWorkSet))											
-											val _ = selectStack := !selectStack @ [n]				
-											val adjN = difference(buscoEnTabla (n,!interf),addList(emptyStr,!selectStack))
-											val setK = decrementDegree (adjN)
-											val _ = simplifyWorkSet :=	difference (union(!simplifyWorkSet,setK),addList(emptyStr,[n]))
-											in  simplify () end)
 
-	and repeatDo () = let
-						val lsws = numItems (!simplifyWorkSet)
-						val lspillws = numItems(!spillWorkSet)
-						(*COALESCE (agrego) val lwsmov = numItems(!workSetMoves) *)
-						(*COALESCE (modifico) in if (lsws <> 0) then simplify() else (if (lwsmov <> 0) then coalesce () else (if lspillws <> 0 then selectSpill() else ()) end *)
-					   in if (lsws <> 0) then simplify() else (if lspillws <> 0 then selectSpill() else ()) end
+	and repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) = 
+		if (lengthSimplify <> 0) then 
+			simplify() else (if (lengthCoalesce <> 0) then
+								coalesce () else (if ( lengthFreeze <> 0) then
+													freeze() else (if (lengthSelectSpill <> 0) then
+																	selectSpill () else raise Fail "No deberia pasar (repeatDo)")))
 					   
 	and repeatUntil () = let
-							val lsws = numItems (!simplifyWorkSet)
-							val lspillws = numItems(!spillWorkSet)
-							(*COALESCE (agrego) val lwsmov = numItems(!workSetMoves) *)
-							(*COALESCE (modifico) val fin = ((lsws = 0) andalso (lspillws = 0)) andalso (lwsmov = 0)*)
-							val fin = (lsws = 0) andalso (lspillws = 0)
-						  in if fin then () else repeatDo () end												
+							val lengthSimplify = numItems (!simplifyWorkSet)
+							val lengthCoalesce = numItems(!workSetMoves)
+							val lengthFreeze = numItems (!freezeWorkSet)
+							val lengthSelectSpill = numItems(!spillWorkSet)							 
+							val fin = ((lengthSimplify = 0) andalso (lengthCoalesce = 0) andalso (lengthFreeze = 0) andalso (lengthSelectSpill = 0))							
+						  in if fin then () else repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) end
+						       					  									
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
 						
@@ -283,6 +331,7 @@ struct
 							val _ = precoloredSet := emptyStr
 							val _ = spilledNodes := []
 							val _ = registersSet := emptyStr
+							val _ = coalescedNodes := emptyStr
 						in () end
 
 	fun pintar n = (case tabBusca(n,!color) of
@@ -300,9 +349,10 @@ struct
 			val _ = precoloredList := ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
 			
 			val _ = color := fillColor(!precoloredList,!color)	
+			val _ = coalescedNodes := emptyStr
 			val _ = precoloredSet := addList(emptyStr, !precoloredList)		
 			val _ = simplifyWorkSet := initial
-			
+			val _ = freezeWorkSet := fillFreezeWorkSet ()
 			val _ = spillWorkSet := addList (emptyStr,tabClaves (tabFiltra ((fn n => n >= K),!degree)))		
 									
 			(*repeat until*)		
@@ -326,6 +376,7 @@ struct
 			val _ = tigerbuild.build(l,printt)		
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
+			val _ = setOfAllTemps := addList (emptyStr, tabClaves (!degree))
 			val _ = precoloredList := ["rbx", sp,"rdi", "rsi", "rdx", "rcx", "r8", "r9", fp, "rax","r10","r11","r12","r13","r14","r15"]
 
 			val _ = registersSet := addList (emptyStr, registers) 
@@ -333,7 +384,7 @@ struct
 			val _ = color := fillColor(!precoloredList,!color)			
 			val _ = precoloredSet := addList(emptyStr, !precoloredList)
 			val _ = simplifyWorkSet := fillSimplifyWorkSet ()
-			
+			val _ = freezeWorkSet := fillFreezeWorkSet ()
 			val _ = spillWorkSet := addList (emptyStr,tabClaves (tabFiltra ((fn n => n >= K),!degree)))								
 			(*repeat until*)		
 			val _ = repeatUntil()	
@@ -343,9 +394,10 @@ struct
 
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
+			val initial = addList (union(coloredNodes,!coalescedNodes), temps)
 			
 			val _ = (print("Temporales agregados\n");List.app print temps)
 									 		 				
-		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, addList (coloredNodes, temps) ) end	 
+		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, initial) end	 
 end
 

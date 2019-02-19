@@ -16,16 +16,81 @@ val degree : (tigertemp.temp,int) tigertab.Tabla ref
 (* color: tabla que asocia a cada nodo con su color elegido por el algoritmo *)
 val color : (tigertemp.temp ,tigertemp.temp) tigertab.Tabla ref
 
-(*
-val precoloredList : 
-val precoloredSet :
-*)
+
+(* precoloredList: lista de nodos precoloreados*)
+val precoloredList : tigertemp.temp list ref
+
+(* precoloredSet: conjunto de nodos precoloreados*)
+val precoloredSet : tigertemp.temp Splayset.set ref
 
 (*spilledNodes: nodos marcados para hacer spill *)
 val spilledNodes : tigertemp.temp list ref
 
+
+(* alias: cuando un move (a,b) se une, v se pone en coalescedNodes y alias(v) = u *)
+val alias : (tigertemp.temp,tigertemp.temp) tigertab.Tabla ref
+
+(* temporales que han sido unidos, si tengo move (v,u) entonces v se une a este conjunto y u es puesto en alguna work list o viceversa *) 
+val coalescedNodes: tigertemp.temp Splayset.set ref
+
+(* moves que han sido unidos *)
+val coalescedMoves : int Splayset.set ref
+
+(* moves cuya fuente y destino interfieren *)
+val constrainedMoves : int Splayset.set ref
+
+(* temporales relacionados con moves y con grado menor a k *)
+val freezeWorkSet : tigertemp.temp Splayset.set ref
+
+(* moves que todavia no estan listos para ser unidos *)
+val activeMoves : int Splayset.set ref	
+
+(* moves que no van a ser considerasdos para coalescing nunca mas*)
+val frozenMoves : int Splayset.set ref	
+
+(* conjunto de todos los temporales existentes*)
+val setOfAllTemps : tigertemp.temp Splayset.set ref
+
 (*registersSet: conjunto de registros de la arquitectura (son los registers de frame pero pasados a conjunto) *)
 val registersSet : tigertemp.temp Splayset.set ref
+
+val nodeMoves : tigertemp.temp -> int Splayset.set
+
+val enableMoves: tigertemp.temp Splayset.set -> unit
+
+val adjacent : tigertemp.temp -> tigertemp.temp Splayset.set
+
+val getAlias: tigertemp.temp -> tigertemp.temp 
+
+(*nuestro moveRelated es un conjunto donde estan todos los nodos involucrados en un move, aca determina si un nodo en especial todavia tiene que ver con un move o no*)
+val moveRelatedFun: tigertemp.temp -> bool
+
+val areAdj: (tigertemp.temp * tigertemp.temp) -> bool
+
+val ok: (tigertemp.temp * tigertemp.temp) -> bool
+
+val fillFreezeWorkSet: unit-> tigertemp.temp Splayset.set
+
+val conservative: tigertemp.temp Splayset.set -> bool
+
+(*  toma un entero que representa una instruccion move y devuelve (src,dst) *)
+	(* funcion auxiliar que toma un entero que es el numero de instruccion y devuelve la tupla (src,dst) de un move *)
+	(* se usa para cuando el libro dice m (copy(x,y))*)
+	
+val tempsInMove: int -> (tigertemp.temp * tigertemp.temp)
+
+val freezeMoves : tigertemp.temp -> unit 
+
+val addEdge: (tigertemp.temp * tigertemp.temp) -> unit
+
+val combine: (tigertemp.temp * tigertemp.temp ) -> unit
+
+
+
+val coalesce: unit -> unit
+
+val freeze: unit -> unit
+
 
 (* getDegree: funcion que dado un temporal busca su cantidad de vecinos en la tabla degree*)
 val getDegree : tigertemp.temp -> int
@@ -34,7 +99,7 @@ val getDegree : tigertemp.temp -> int
 val fillSimplifyWorkSet : unit -> tigertemp.temp Splayset.set
 
 (* decrementDegree: dado un conjunto de temporales hace lo que pide el libro pagina 246*)
-val decrementDegree: tigertemp.temp Splayset.set -> tigertemp.temp Splayset.set
+val decrementDegree: tigertemp.temp Splayset.set -> unit
 
 (* simplify: libro pagina 246*)
 val simplify: unit -> unit
@@ -46,7 +111,7 @@ val fillColor: (tigertemp.temp list * (tigertemp.temp ,tigertemp.temp) tigertab.
 val selectSpill : unit -> unit
 
 (* repeatDo: funcion que implementa la parte de repeat until de la pagina 244*)
-val repeatDo : unit -> unit
+val repeatDo : (int * int * int * int) -> unit
 
 (* repeatUntil: funcion que implementa la parte de repeat until de la pagina 244*)
 val repeatUntil : unit -> unit
@@ -59,25 +124,6 @@ val colorear : (tigerassem.instr list * tigerframe.frame * int) -> ((tigertemp.t
 
 end
 	
-(*
-val getSimplifyList : (tigertemp.temp, int) tigertab.Tabla ref * (tigertemp.temp, bool) tigertab.Tabla ref -> tigertemp.temp Splayset.set
-
-val getFreezeList : (tigertemp.temp, int) tigertab.Tabla ref * (tigertemp.temp, bool) tigertab.Tabla ref -> tigertemp.temp Splayset.set
-
-val areAdj : tigertemp.temp * tigertemp.temp -> bool
-
-
-
-val fillMoveRelated : int ->  string Splayset.set 
-
-val isMoveRelated : tigertemp.temp -> bool
-
-val fillInterf : int * (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla -> (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
-
-val worklistMoves : int Splayset.set
-
-*)
-
 	
 	(*
 		fun areAdj (t1,t2) = case (tabBusca (t1,!interf)) of
