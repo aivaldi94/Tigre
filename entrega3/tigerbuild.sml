@@ -1,3 +1,4 @@
+
 structure tigerbuild :> tigerbuild =
 struct
 	open tigerassem
@@ -60,19 +61,9 @@ struct
 		val _ = if (pFlag = 1) then (print("Cantidad de instrucciones "^Int.toString(longNatToInstr)^"\n\nImprimo natToInstr\n");tigertab.tabPrintIntInstr(!natToInstr)) else ()
 		
 	(* ---------------------------------------------------------------------------------------------------------- *)
-		(* Página 237:
-		the CALL instructions in the Assem language have been annotated to define (interfere with) all the caller-save registers*)
 		
 		fun fillDefs i = case i of
 							OPER {assem=s,dst=d,src=_,jump=_} =>  addList (empty,d)	
-																(*let val isCall = String.isSubstring "call" s
-																	 val isPop = String.isSubstring "popq" s
-																	 val isPush = String.isSubstring "pushq" s
-																	 val callThen = addList (empty,"rsp"::callersaves)																	 
-																	 val popThen = addList (empty,"rsp"::d)
-																	 val pushThen = addList (empty, ["rsp"])
-																	 val genElse = addList (empty,d)																	  
-																 in if isCall then callThen else (if isPop then popThen else (if isPush then pushThen else genElse)) end*)
 							| LABEL {assem=_,lab=_} => empty
 							| MOVE {assem=_,dst=d,src=_} => singleton String.compare d 
 								
@@ -84,12 +75,6 @@ struct
 		
 		fun fillUses i = case i of 
 							OPER {assem=a,dst=_,src=s,jump=_} =>  addList (empty,s)		
-																(*let val isPop = String.isSubstring "popq" a
-																	 val isPush = String.isSubstring "pushq" a																	 
-																	 val popThen = addList (empty,["rsp"])
-																	 val pushThen = addList (empty, "rsp"::s)
-																	 val genElse = addList (empty,s)																	  
-																 in if isPop then popThen else (if isPush then pushThen else genElse) end*)
 							| LABEL {assem=_,lab=_} => empty
 							| MOVE {assem=_,dst=_,src=s} => singleton String.compare s
 								
@@ -126,76 +111,61 @@ struct
 						SOME (MOVE {assem=a,dst=d,src=s}) => true
 						| _ => false												
 																																			
-		fun forEachN (0,outNueva,outVieja,inNueva,inVieja) = let
-															fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
-																						NONE => empty
-																						| SOME v => v)
-															fun buscoEnTablaInt (x,t) = (case (tabBusca (x,t)) of 
-																						NONE => Splayset.empty Int.compare
-																						| SOME v => v)
-															val b = buscoEnTabla (0,inVieja)
-															val inNueva' = tabRInserta (0,b,inNueva)
-															
-															val b1 = buscoEnTabla (0,outVieja)
-															val outNueva' = tabRInserta (0,b1,outNueva)
-															
-															val useN = buscoEnTabla (0,!uses)										
-															val outN = buscoEnTabla (0,outVieja)									
-															val defN = buscoEnTabla (0,!defs)									
-															val inVieja' = tabRInserta(0,union(useN,difference(outN,defN)),inVieja)
-															
-															val succsN = listItems (buscoEnTablaInt (0,!succs))
-															fun index n = listItems (buscoEnTabla (0,inVieja'))
-															
-															val m = Splayset.addList(empty,List.concat (List.map index succsN))
-															val outVieja' = tabRInserta (0,m,outVieja)
-														in
-															(outNueva',outVieja',inNueva',inVieja')
-														end
+		fun forEachN (0,outNueva,outVieja,inNueva,inVieja) = (outNueva,outVieja,inNueva,inVieja)
 		| forEachN (n,outNueva,outVieja,inNueva,inVieja) = let
+															val nReal = n-1
 															fun buscoEnTabla (x,t) = (case (tabBusca (x,t)) of 
 																						NONE => empty
 																						| SOME v => v)
 															fun buscoEnTablaInt (x,t) = (case (tabBusca (x,t)) of 
 																						NONE => Splayset.empty Int.compare
 																						| SOME v => v)
-															val b = buscoEnTabla (n,inVieja)
-															val inNueva' = tabRInserta (n,b,inNueva)
+															val b = buscoEnTabla (nReal,inVieja)
+															val inNueva' = tabRInserta (nReal,b,inNueva)
 															
-															val b1 = buscoEnTabla (n,outVieja)
-															val outNueva' = tabRInserta (n,b1,outNueva)
+															val b1 = buscoEnTabla (nReal,outVieja)
+															val outNueva' = tabRInserta (nReal,b1,outNueva)
 															
-															val useN = buscoEnTabla (n,!uses)										
-															val outN = buscoEnTabla (n,outVieja)									
-															val defN = buscoEnTabla (n,!defs)									
-															val inVieja' = tabRInserta(n,union(useN,difference(outN,defN)),inVieja)
+															val useN = buscoEnTabla (nReal,!uses)										
+															val outN = buscoEnTabla (nReal,outVieja)									
+															val defN = buscoEnTabla (nReal,!defs)									
+															val inVieja' = tabRInserta(nReal,union(useN,difference(outN,defN)),inVieja)
 															
-															val succsN = listItems (buscoEnTablaInt (n,!succs))
-															fun index n = listItems (buscoEnTabla (n,inVieja'))
-															
+															(*
+															val succsN = listItems (buscoEnTablaInt (nReal,!succs))
+															fun index m = listItems (buscoEnTabla (m,inVieja'))		
 															val m = Splayset.addList(empty,List.concat (List.map index succsN))
-															val outVieja' = tabRInserta (n,m,outVieja)
+															*)
+															
+															val succsN = buscoEnTablaInt (nReal,!succs)
+															fun f (node, tempSet) = union(tempSet, buscoEnTabla (node,inVieja'))
+															val m = foldl f emptyStr succsN
+															
+															val outVieja' = tabRInserta (nReal,m,outVieja)
 														in
 															forEachN (n-1, outNueva',outVieja',inNueva',inVieja')
 														end
 														
 		fun repeatUntil (outNueva,outVieja,inNueva,inVieja) = let 
-															val (outNueva',outVieja',inNueva',inVieja') = forEachN (lastInstrNumber,outNueva,outVieja,inNueva,inVieja)
+															val (outNueva',outVieja',inNueva',inVieja') = forEachN (longNatToInstr,outNueva,outVieja,inNueva,inVieja)
 															val fin = tabIgual (Splayset.equal,outNueva,outNueva') andalso tabIgual (Splayset.equal,inNueva,inNueva')
 														in 
 															if fin then (outNueva',outVieja',inNueva',inVieja') else  repeatUntil(outNueva',outVieja',inNueva',inVieja')
 														end						
-														
-		fun liveness (0,(outNueva,outVieja,inNueva,inVieja)) = (outNueva,outVieja,inNueva,inVieja)
-			| liveness (n,(outNueva,outVieja,inNueva,inVieja)) = let
-																	val inVieja' = tabRInserta(n,empty,inVieja)
-																	val outVieja' = tabRInserta(n,empty,outVieja)
-																in liveness(n-1,repeatUntil(outNueva,outVieja',inNueva,inVieja'))
-																end
+		
+		fun listInit 0 = [0]
+		| listInit n = n :: (listInit (n-1))
+		
+		fun liveness (outNueva,outVieja,inNueva,inVieja) =  let
+																val list = listInit lastInstrNumber
+																val inVieja' = List.foldl (fn (n,tabla) => tabRInserta(n,empty,tabla)) inVieja list
+																val outVieja' = List.foldl (fn (n,tabla) => tabRInserta(n,empty,tabla)) outVieja list
+															in repeatUntil(outNueva,outVieja',inNueva,inVieja')
+															end
 														
 		fun referenciar (a,b,c,d) =(ref a, ref b, ref c, ref d)
 		
-		val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(lastInstrNumber,(tabNueva(),tabNueva(),tabNueva(),tabNueva())))
+		val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(tabNueva(),tabNueva(),tabNueva(),tabNueva()))
 		
 		val _ = if (pFlag = 1) then (print ("\nImprimo liveIn\n");tigertab.tabPrintIntTempSet(!liveIn)) else ()		
 		val _ = if (pFlag = 1) then (print ("\nImprimo liveOut\n");tigertab.tabPrintIntTempSet(!liveOut)) else ()
