@@ -42,26 +42,19 @@ struct
 								val l2 = map (fn n => intersection (n,!activeMoves)) l1 
 							in List.app (fn n => (activeMoves := difference(!activeMoves,n); workSetMoves := union (!workSetMoves, n))) l2 end
 							
-	 fun adjacent n = difference(buscoEnTabla (n,!interf),union(addList(emptyStr,!selectStack),!coalescedNodes))
+	fun adjacent n = difference(buscoEnTabla (n,!interf),union(addList(emptyStr,!selectStack),!coalescedNodes))
 	 
 	fun minusOneSet s x = x-1 
 														
 	fun decrementDegree (s) = let 								
-								(* paso a lista el conjunto de temporales*)
 								val listTemps = listItems s
-								(* me quedo con los temps de la lista cuyo grado es K *)									
-								
-								val listKNeig = List.filter (fn n => (buscoEnTabla(n,!degree)) = K) listTemps
-								(* a cada temp de la lista original le resto un vecino *)
-								
+								val listKNeig = List.filter (fn n => (buscoEnTabla(n,!degree)) = K) listTemps								
 								fun minusOne n = case tabBusca(n,!degree) of
 													NONE => raise Fail "No deberia pasar minusOne"
 													| SOME i => i-1
 								
 								fun f (tmp, t) = tabRInserta (tmp,minusOne tmp,t) 					
 								val _ = degree := List.foldl f (!degree) listTemps
-								
-								(*elimino del conjunto spillWorkSet los elementos de listKNeig*)
 								val setKNeig = addList(emptyStr,listKNeig)
 								
 								val activarMoves = List.foldl (fn (n,set) =>union(adjacent(n),set)) setKNeig listKNeig
@@ -107,7 +100,7 @@ struct
 	fun freezeMoves u = let
 							fun aux n = let
 											val nSet = add(emptyInt,n)
-											val _ = print ("freezeMoves")
+											val _ = print (" Estoy en freezeMoves\n")
 											val (x,y) = tempsInMove n (*NO SABEMOS ORDEN CORRECTO *)
 											val v = if getAlias(y) = getAlias u then getAlias(x) else getAlias(y)
 											val vSet = add(emptyStr,v)
@@ -133,7 +126,7 @@ struct
 							val vSet = Splayset.singleton String.compare v
 							val uSet = Splayset.singleton String.compare u
 							val _ = if member (!freezeWorkSet, v) then freezeWorkSet := difference (!freezeWorkSet, vSet) else spillWorkSet := difference (!spillWorkSet,vSet)
-							val _ = coalescedNodes := union (!coalescedNodes,vSet)
+							val _ = (print("Agrego el nodo "^v^" a coalescedNodes\n");coalescedNodes := union (!coalescedNodes,vSet))
 							val _ = alias := tabRInserta (v,u,!alias)
 							val _ = moveSet := tabRInserta(u,union(buscoEnTabla(u,!moveSet),buscoEnTabla(v,!moveSet)),!moveSet)
 							val adj = adjacent (v)
@@ -152,9 +145,7 @@ struct
 									val lowDegreeList = tabClaves (tabFiltra ((fn n => n < K ),(!degree)))									
 									val lowDegreeSet = addList(emptyStr,lowDegreeList)
 									val nonMoveRelSet = difference (!setOfAllTemps, !moveRelated)
-									(* Agregado para COALESCE *)
-								 in intersection (lowDegreeSet,nonMoveRelSet) end								 
-								(* sin coalesce in addList(emptyStr,lowDegreeList) end *)													  								
+								 in intersection (lowDegreeSet,nonMoveRelSet) end								 												  								
 								
 
 	fun fillColor ([],c) = c
@@ -172,10 +163,9 @@ struct
 	and coalesce ()	= let 
 						val m = hd (listItems(!workSetMoves))
 						val mSet = Splayset.singleton Int.compare m
-						val _ = print("coalsece")
 						val (x',y') = tempsInMove m (*NO SABEMOS ORDEN CORRECTO *)
-						val x = buscoEnTabla(x',!alias)
-						val y = buscoEnTabla(y',!alias)
+						val x = getAlias(x')
+						val y = getAlias(y')
 						val (u,v) = if member(!precoloredSet,y) then (y,x) else (x,y)
 						val _ = workSetMoves := delete (!workSetMoves,m)
 						val cond1 = member(!precoloredSet,v) orelse areAdj(u,v)
@@ -208,7 +198,7 @@ struct
 	and repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) = 
 		if (lengthSimplify <> 0) then 
 			simplify() else (if (lengthCoalesce <> 0) then
-								coalesce () else (if ( lengthFreeze <> 0) then
+								coalesce () else (if (lengthFreeze <> 0) then
 													freeze() else (if (lengthSelectSpill <> 0) then
 																	selectSpill () else raise Fail "No deberia pasar (repeatDo)")))
 					   
@@ -400,4 +390,3 @@ struct
 									 		 				
 		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, initial) end	 
 end
-
