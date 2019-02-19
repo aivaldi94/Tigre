@@ -16,7 +16,6 @@ struct
 	
 	(*Estructuras*)
 	val natToInstr = ref (tabNueva())
-	val longNatToInstr = ref 0
 	val defs = ref (tabNueva())
 	val uses = ref (tabNueva())
 	val succs = ref (tabNueva())
@@ -55,9 +54,10 @@ struct
 			
 		val _ = natToInstr := fillNatToInstr(instrList,0) 	
 		
-		val _ = longNatToInstr := List.length(tabAList(!natToInstr)) - 1
+		val longNatToInstr = List.length(instrList) 
+		val lastInstrNumber = longNatToInstr - 1
 		
-		val _ = if (pFlag = 1) then (print("Cantidad de instrucciones "^Int.toString(!longNatToInstr)^"\n\nImprimo natToInstr\n");tigertab.tabPrintIntInstr(!natToInstr)) else ()
+		val _ = if (pFlag = 1) then (print("Cantidad de instrucciones "^Int.toString(longNatToInstr)^"\n\nImprimo natToInstr\n");tigertab.tabPrintIntInstr(!natToInstr)) else ()
 		
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		(* Página 237:
@@ -180,7 +180,7 @@ struct
 														end
 														
 		fun repeatUntil (outNueva,outVieja,inNueva,inVieja) = let 
-															val (outNueva',outVieja',inNueva',inVieja') = forEachN (!longNatToInstr,outNueva,outVieja,inNueva,inVieja)
+															val (outNueva',outVieja',inNueva',inVieja') = forEachN (lastInstrNumber,outNueva,outVieja,inNueva,inVieja)
 															val fin = tabIgual (Splayset.equal,outNueva,outNueva') andalso tabIgual (Splayset.equal,inNueva,inNueva')
 														in 
 															if fin then (outNueva',outVieja',inNueva',inVieja') else  repeatUntil(outNueva',outVieja',inNueva',inVieja')
@@ -195,7 +195,7 @@ struct
 														
 		fun referenciar (a,b,c,d) =(ref a, ref b, ref c, ref d)
 		
-		val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(!longNatToInstr,(tabNueva(),tabNueva(),tabNueva(),tabNueva())))
+		val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(lastInstrNumber,(tabNueva(),tabNueva(),tabNueva(),tabNueva())))
 		
 		val _ = if (pFlag = 1) then (print ("\nImprimo liveIn\n");tigertab.tabPrintIntTempSet(!liveIn)) else ()		
 		val _ = if (pFlag = 1) then (print ("\nImprimo liveOut\n");tigertab.tabPrintIntTempSet(!liveOut)) else ()
@@ -234,7 +234,7 @@ struct
 									| MOVE {assem=_,dst=d,src=s} => add (add (fillMoveRelated (n-1),s),d) 
 								end																		
 														
-		val _ = moveRelated := fillMoveRelated (!longNatToInstr)
+		val _ = moveRelated := fillMoveRelated (lastInstrNumber)
 				
 
 	(* ---------------------------------------------------------------------------------------------------------- *)			
@@ -285,32 +285,36 @@ struct
 												in (*(print(Int.toString(n)^" MOVE"^tigerassem.format name i^"\n");tigertab.tabPrintTempTempSet(tab'');print("\n");*)fillInterf(n-1,tab'')(*)*) end
 								end		
 
-		val _ = interf := fillInterf(!longNatToInstr,tabNueva())
+		val _ = interf := fillInterf(lastInstrNumber,tabNueva())
+		
+		val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf)) else ()
 		
 	(* ---------------------------------------------------------------------------------------------------------- *)			
 
 	(* fillMoves: (instr list, int,tigertemp.temp Splayset.set, (tigertemp.temp, tigertemp.temp) tigertab.Tabla) ->  (tigertemp.temp Splayset.set, (tigertemp.temp, tigertemp.temp) tigertab.Tabla) ??? conviene el numero de instruccion o mejor (src,dst,numero)????*)
     (* esta funcion llena tanto el conjunto que contiene el n° de instrucciones que son moves como la tabla a la que a cada temp le corresponde el conjunto de n° de instrucciones donde este interviene en un move*)
-    fun fillMoves (_,~1,sMoves,tabMoves) = (sMoves,tabMoves)
+    fun fillMoves ([],_,sMoves,tabMoves) = (sMoves,tabMoves)
 		| fillMoves ((i::xs),n,sMoves,tabMoves) = case i of 
 													MOVE {assem=_,dst=d,src=s} => (let 
 																						fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
 																										NONE => emptyInt
 																										| SOME c => c)
-																						val nSet = add(emptyInt,(!longNatToInstr) - n)
-																						val dSet = findSet(d,tabMoves)																									
-																						val sSet = findSet (s,tabMoves)																						
+																						val nSet = singleton Int.compare n
+																						
+																						(* Instrucciones con las que ya están relacionados la fuente y el destino*)
+																						val dSet = findSet(d,tabMoves)					
+																						val sSet = findSet (s,tabMoves)																							
 																						val sMoves' = if member(buscoEnTabla(s,!interf),d) then sMoves else union(sMoves, nSet)
+																						
 																						val tabMoves' = tabRInserta(d,union(dSet,nSet),tabRInserta(s,union(sSet,nSet),tabMoves))
-																					in fillMoves(xs,n-1,sMoves',tabMoves') end)
-													| _ => fillMoves(xs,n-1,sMoves,tabMoves)
+																						
+																					in fillMoves(xs,n+1,sMoves',tabMoves') end)
+													| _ =>  fillMoves(xs,n+1,sMoves,tabMoves)
 
-	val (workSetMoves',moveSet') = fillMoves (instrList,!longNatToInstr,emptyInt,tabNueva())
+	val (workSetMoves',moveSet') = fillMoves (instrList,0,emptyInt,tabNueva())
 	val _ = workSetMoves := workSetMoves'
 	val _ = moveSet := moveSet'
-	val _ = (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n))) (listItems (!workSetMoves)))
-			
-	val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf)) else ()
+	val _ = (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves)))
 		   
 	in print("ok build\n") end	 
 end

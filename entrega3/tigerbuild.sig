@@ -26,7 +26,6 @@ val getTemps : tigerassem.instr list * tigertemp.temp Splayset.set -> tigertemp.
 *)
 
 val K : int
-val longNatToInstr : int ref
 val id : tigertemp.temp -> tigertemp.temp
 (* tigertab.Tabla que asocia enteros (nodos) con instrucciones *)
 val natToInstr : (int, tigerassem.instr) tigertab.Tabla ref
