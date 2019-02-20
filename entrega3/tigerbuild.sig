@@ -42,6 +42,9 @@ val liveIn : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
 (* conjunto de temps relacionados con moves *)
 val moveRelated : tigertemp.temp Splayset.set ref
 
+(* contiene los n° de instrucciones que son move. al principio se carga igualq ue workSetMoves pero luego nunca se modifica*)
+
+val allMoves : int Splayset.set ref
 val workSetMoves: int Splayset.set ref
 
 val moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref

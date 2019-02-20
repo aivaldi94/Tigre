@@ -31,7 +31,8 @@ struct
 	val activeMoves = ref(emptyInt) 
 	val frozenMoves = ref(emptyInt) 
 	val setOfAllTemps = ref(emptyStr) 
-		
+
+	(**********************************************************************************************************)
 	fun invNodes() = let
 						val listNodes = listItems (!setOfAllTemps)
 						val setOfSpilled = addList(emptyStr,!spilledNodes)
@@ -44,6 +45,19 @@ struct
 									val _ = if suma = 1 then () else raise Fail "invNodes"
 								 in () end
 					 in List.app f listNodes end
+					 
+	fun invMoves() = let
+						val listMoves = listItems(!allMoves)
+						fun f n = let 
+									val listaSets = [!coalescedMoves,!constrainedMoves,!frozenMoves,!workSetMoves,!activeMoves]
+									val lInts = map (fn s => if member(s,n) then 1 else 0) listaSets
+									val suma = List.foldl (fn (n1,n2) => n1 + n2) 0 lInts
+									val _ = if suma <> 1 then (print ("instruccion "^Int.toString(n)^": ");List.app (fn n => print(Int.toString(n)^" ")) lInts;print("\n")) else ()
+									val _ = if suma = 1 then () else raise Fail "invMoves"
+								in () end
+					 in List.app f listMoves end	
+	
+	(**********************************************************************************************************)
 																							
 	fun findSetInt (t : temp, tabla) = (case tabBusca (t,tabla) of
 											NONE => emptyInt
@@ -82,7 +96,6 @@ struct
 								val activarMoves = List.foldl (fn (n,set) =>union(adjacent(n),set)) setKNeig listKNeig
 								val _ = enableMoves (activarMoves)
 															
-								val _ = if member (setKNeig, "T146") then print ("esta en decrement\n") else ()
 								val _ = spillWorkSet := difference (!spillWorkSet,setKNeig)
 								
 								
@@ -137,13 +150,22 @@ struct
 											                      print("Estoy en el app de freezemoves\n");invNodes();									                      											                      
 																  simplifyWorkSet2 := union (!simplifyWorkSet2,vSet)) else ()
 									    in () end	
-							val _ = print (" ejecuto inv antes de freezeMoves\n")		    										
-							val _ = invNodes()							
-							val _ = print ("ok inv antes de freeze moves\n")
-							val _ = Splayset.app aux (nodeMoves(u))
-							val _ = print (" ejecuto inv dsp de freezeMoves\n")		    																	
+							val _ = print("\nANTES DE freezeMoves: EJECUTO INVARIANTE NODOS\n")
 							val _ = invNodes()
-							val _ = print ("ok inv despues de freeze moves\n")														
+							val _ = print ("\nANTES DE freezeMoves: OK INVARIANTE NODOS\n")
+							val _ = print("\nANTES DE freezeMoves: EJECUTO INVARIANTE MOVES\n")
+							val _ = invMoves()
+							val _ = print ("\nANTES DE freezeMoves: OK INVARIANTE MOVES\n")
+							
+							val _ = Splayset.app aux (nodeMoves(u))
+							
+							val _ = print("\nDESPUES DE freezeMoves: EJECUTO INVARIANTE NODOS\n")
+							val _ = invNodes()
+							val _ = print ("\nDESPUES DE freezeMoves: OK INVARIANTE NODOS\n")
+							val _ = print("\nDESPUES DE freezeMoves: EJECUTO INVARIANTE MOVES\n")
+							val _ = invMoves()
+							val _ = print ("\nDESPUES DE freezeMoves: OK INVARIANTE MOVES\n")														
+						
 						in () end
 						  										
     
@@ -173,35 +195,43 @@ struct
     
     
 	fun getDegree t = buscoEnTabla (t,!degree)
-
-	
-	(* HAY QUE HACER UNA VERSIÓN QUE TOME UN CONJUNTO INICIAL 
-	fun fillSimplifyWorkSet (initial) = let
-											val lowDegreeList = foldl (fn(temp,set) => union(set, if 
-											tabClaves (tabFiltra ((fn n => n < K ),(!degree)))									
-											val lowDegreeSet = addList(emptyStr,lowDegreeList)
-											val nonMoveRelSet = difference (!setOfAllTemps, !moveRelated)
-										 in intersection (lowDegreeSet,nonMoveRelSet) end								 												  								
-		*)						
+					
 
 	fun fillColor ([],c) = c
 	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
 	  														
 	
-	fun simplify () = (print("entrando simplify");invNodes();(case (numItems(!simplifyWorkSet)) of 
+	fun simplify () = (print("\nANTES DE SIMPLIFY: EJECUTO INVARIANTE NODOS\n");
+					   invNodes();
+					   print ("\nANTES DE SIMPLIFY: OK INVARIANTE NODOS\n");
+					   print("\nANTES DE SIMPLIFY: EJECUTO INVARIANTE MOVES\n");
+					   invMoves();
+					   print ("\nANTES DE SIMPLIFY: OK INVARIANTE MOVES\n");
+					  (case (numItems(!simplifyWorkSet)) of 
 								0 => repeatUntil()
 								| _ => (let 
 											val n = hd(listItems (!simplifyWorkSet))
 											val _ = simplifyWorkSet := delete(!simplifyWorkSet,n)
 											val _ = selectStack := !selectStack @ [n]
-											val _ = print("entro adjacent: temporal "^n^"\n")															
 											val adjN = adjacent n
-											val _ = print("sale adjacent\n")
 											val _ = decrementDegree (adjN)	
-											val _ = print("sale decrement\n")										
-											in  simplify () end));print("saliendo simplify");invNodes())
+											in  simplify () end));
+					   print("\nDESPUES DE SIMPLIFY: EJECUTO INVARIANTE NODOS\n");
+					   invNodes();
+					   print ("\nDESPUES DE SIMPLIFY: OK INVARIANTE NODOS\n");
+					   print("\nDESPUES DE SIMPLIFY: EJECUTO INVARIANTE MOVES\n");
+					   invMoves();
+					   print ("\nDESPUES DE SIMPLIFY: OK INVARIANTE MOVES\n"))
+						
+						
 	and coalesce ()	= let 
-						val _ = print("coalesce\n")
+						val _ = print("\nANTES DE coalesce: EJECUTO INVARIANTE NODOS\n")
+					    val _ = invNodes()
+					    val _ = print ("\nANTES DE coalesce: OK INVARIANTE NODOS\n")
+					    val _ = print("\nANTES DE coalesce: EJECUTO INVARIANTE MOVES\n")
+					    val _ = invMoves()
+					    val _ = print ("\nANTES DE coalesce: OK INVARIANTE MOVES\n")
+					    
 						val m = hd (listItems(!workSetMoves))
 						val mSet = Splayset.singleton Int.compare m
 						val (x',y') = tempsInMove m (*NO SABEMOS ORDEN CORRECTO *)
@@ -219,41 +249,72 @@ struct
 						val _ = if (u = v) then (coalescedMoves := union(!coalescedMoves,mSet);
 												 addWorkList(u)) else (if cond1 then (constrainedMoves := union(!constrainedMoves,mSet);
 																					 addWorkList(u); addWorkList(v)) else (if cond2 then (coalescedMoves := union (!coalescedMoves,mSet);
-																																		  combine(u,v); addWorkList(u)) else activeMoves := union(!activeMoves,mSet)))						
+																																		  combine(u,v); addWorkList(u)) else activeMoves := union(!activeMoves,mSet)))
+						val _ = print("\nDESPUES DE coalesce: EJECUTO INVARIANTE NODOS\n")
+						val _ = invNodes()
+						val _ = print ("\nDESPUES DE coalesce: OK INVARIANTE NODOS\n")
+						val _ = print("\nDESPUES DE coalesce: EJECUTO INVARIANTE MOVES\n")
+						val _ = invMoves()
+						val _ = print ("\nDESPUES DE coalesce: OK INVARIANTE MOVES\n")
+																																			  
 					  in repeatUntil() end
     
     and freeze () = let
-						val _ = print("freezee\n")
+						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")
+						val _ = invNodes()
+						val _ = print ("\nANTES DE freeze: OK INVARIANTE NODOS\n")
+						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE MOVES\n")
+						val _ = invMoves()
+						val _ = print ("\nANTES DE freeze: OK INVARIANTE MOVES\n")
+						    
 						val u = hd (listItems(!freezeWorkSet))
 						val uSet = add(emptyStr,u)
 						val _ = freezeWorkSet := difference(!freezeWorkSet, uSet)
 						val _ = simplifyWorkSet := union(!simplifyWorkSet,uSet)
-						val _ = ((if member(!simplifyWorkSet2,u) then raise Fail ("agrego algo que ya estaba freeze"^u) else ());
+						val _ = ((if member(!simplifyWorkSet2,u) then raise Fail ("agrego algo que ya estaba freeze"^u^"\n") else ());
 																  simplifyWorkSet2 := union (!simplifyWorkSet2,uSet))
 						val _ = freezeMoves(u)
+	
+						val _ = print("\nDESPUES DE freeze: EJECUTO INVARIANTE NODOS\n")
+						val _ = invNodes()
+						val _ = print ("\nDESPUES DE freeze: OK INVARIANTE NODOS\n")
+						val _ = print("\nDESPUES DE freeze: EJECUTO INVARIANTE MOVES\n")
+						val _ = invMoves()
+						val _ = print ("\nDESPUES DE freeze: OK INVARIANTE MOVES\n")
+
+
 					 in repeatUntil() end
   												
 	and selectSpill () = let
-							val _ = print ("entro selectspill\n")
-							val _ = invNodes ()
+							val _ = print("\nANTES DE selectSpill: EJECUTO INVARIANTE NODOS\n")
+						    val _ = invNodes()
+						    val _ = print ("\nANTES DE selectSpill: OK INVARIANTE NODOS\n")
+						    val _ = print("\nANTES DE selectSpill: EJECUTO INVARIANTE MOVES\n")
+						    val _ = invMoves()
+						    val _ = print ("\nANTES DE selectSpill: OK INVARIANTE MOVES\n")
+						    
 							val m = hd(listItems (!spillWorkSet))
-							val mSet = add(emptyStr,m)
-							val _ = if member (!spillWorkSet,"T146")  then print ("esta en selectspill") else ()
+							val mSet = add(emptyStr,m)							
 							val _ = spillWorkSet := difference (!spillWorkSet,mSet)
 							val _ = simplifyWorkSet := union (!simplifyWorkSet,mSet)
 							val _ = ((if member(!simplifyWorkSet2,m) then raise Fail ("agrego algo que ya estaba selectSpill"^m) else ());
 																  simplifyWorkSet2 := union (!simplifyWorkSet2,mSet))							
 							val _ = freezeMoves(m)
+							
+							val _ = print("\nDESPUES DE selectSpill: EJECUTO INVARIANTE NODOS\n")
 							val _ = invNodes()
-							val _ = print ("salgo de spillnodes")
+							val _ = print ("\nDESPUES DE selectSpill: OK INVARIANTE NODOS\n")
+							val _ = print("\nDESPUES DE selectSpill: EJECUTO INVARIANTE MOVES\n")
+							val _ = invMoves()
+							val _ = print ("\nDESPUES DE selectSpill: OK INVARIANTE MOVES\n")
 						in repeatUntil() end
 
-	and repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) = (print("en repeatdo\n");invNodes();
+	and repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) =
 		if (lengthSimplify <> 0) then 
-			(simplify();print("salgo de simplify\n")) else (if (lengthCoalesce <> 0) then
+			simplify() else (if (lengthCoalesce <> 0) then
 								coalesce () else (if (lengthFreeze <> 0) then
 													freeze() else (if (lengthSelectSpill <> 0) then
-																	(selectSpill ()) else raise Fail "No deberia pasar (repeatDo)"))))
+																	(selectSpill ()) else raise Fail "No deberia pasar (repeatDo)")))
 					   
 	and repeatUntil () = let
 							val lengthSimplify = numItems (!simplifyWorkSet)
@@ -456,8 +517,7 @@ struct
 			val _ = (print("Temporales agregadoss\n");List.app print temps)
 			
 			val _ = (print("Lista que es argumento de colorear' desde colorear': "); List.app (fn n => print(n^"\n")) (listItems(addList (coloredNodes, temps))))
-			val _ = print ("invNodes colorear'")
-			val _ = invNodes ()
+
 		in if temps = [] then (pintar,instructions) else colorear'(instructions,f, initial') end	
 		
 	fun colorear (l,f,printt) = 
@@ -483,9 +543,6 @@ struct
 			
 			val _ = makeWorkList(inicial)
 			
-			val _ = print ("primer invNodes colorear")
-			val _ = invNodes ()
-			
 			(*repeat until*)		
 			val _ = repeatUntil()	
 			(* assign colors*)
@@ -499,7 +556,6 @@ struct
 			val _ = (print("colaescedNodes: "); List.app (fn n => print(n^"\n")) (listItems(!coalescedNodes)))
 			
 			val _ = (print("Temporales agregados\n");List.app print temps)
-			val _ = print ("2do invNodes colorear")
-			val _ = invNodes ()						 		 				
+			 		 				
 		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, initial') end	 
 end

@@ -5,6 +5,7 @@ open Splayset
 open Polyhash
 
 
+
 type ('a, 'b) Tabla = ('a, 'b) hash_table
 
 exception yaExiste of string
@@ -91,6 +92,9 @@ val its = Int.toString
 
 fun concatStrings [] = " "
 	|concatStrings (x::xs) = " "^x^concatStrings(xs)
+	
+fun concatInts [] = " "
+	|concatInts (x::xs) = " "^Int.toString(x)^concatInts(xs)
 
 fun printInstrList l = List.app (fn i => print (tigerassem.format name i^"\n")) l
 								
@@ -124,5 +128,10 @@ fun tabPrintTempTemp t = let
 							val _ = List.app (fn (t,temp) => print (t^" -> "^temp^"\n")) l
 						 in () end	
 
+						 
+fun tabPrintTempIntSet t = let
+							val l = tabAList t
+							val _ = List.app (fn (t,set) => print (t^" -> {"^(concatInts(Splayset.listItems set))^"}\n")) l
+							in () end
 
 end
