@@ -69,7 +69,7 @@ val areAdj: (tigertemp.temp * tigertemp.temp) -> bool
 
 val ok: (tigertemp.temp * tigertemp.temp) -> bool
 
-val fillFreezeWorkSet: unit-> tigertemp.temp Splayset.set
+(*val fillFreezeWorkSet: unit-> tigertemp.temp Splayset.set*)
 
 val conservative: tigertemp.temp Splayset.set -> bool
 
@@ -96,7 +96,7 @@ val freeze: unit -> unit
 val getDegree : tigertemp.temp -> int
 
 (* fillSimplifyWorkSet: funcion que rellena el conjunto simplifyWorkSet *)
-val fillSimplifyWorkSet : unit -> tigertemp.temp Splayset.set
+(*val fillSimplifyWorkSet : unit -> tigertemp.temp Splayset.set*)
 
 (* decrementDegree: dado un conjunto de temporales hace lo que pide el libro pagina 246*)
 val decrementDegree: tigertemp.temp Splayset.set -> unit
