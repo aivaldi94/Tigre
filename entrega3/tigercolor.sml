@@ -16,8 +16,6 @@ struct
 	val simplifyWorkSet2 = ref(emptyStr)
 	val degree = ref (tabNueva())
 	val color = ref (tabNueva())
-	val precoloredList = ref([])
-	val precoloredSet = ref(emptyStr)
 	val spilledNodes = ref ([])
 	val registersSet = ref(emptyStr)
 	val coloredNodes = ref(emptyStr)
@@ -84,7 +82,8 @@ struct
 	fun decrementDegree (s) = let 		
 								val _ = (print ("entrando a drecrement\n");invNodes())
 								val listTemps = listItems s
-								val listKNeig = List.filter (fn n => (buscoEnTabla(n,!degree)) = K) listTemps								
+								val listKNeig = List.filter (fn n => (buscoEnTabla(n,!degree)) = K) listTemps		
+														
 								fun minusOne n = case tabBusca(n,!degree) of
 													NONE => raise Fail "No deberia pasar minusOne"
 													| SOME i => i-1
@@ -94,10 +93,11 @@ struct
 								val setKNeig = addList(emptyStr,listKNeig)
 								
 								val activarMoves = List.foldl (fn (n,set) =>union(adjacent(n),set)) setKNeig listKNeig
+								val _ = print("ok\n")
+								
 								val _ = enableMoves (activarMoves)
 															
 								val _ = spillWorkSet := difference (!spillWorkSet,setKNeig)
-								
 								
 								val nodesKMoveRelated = addList(emptyStr,List.filter moveRelatedFun listKNeig)(*intersection (!moveRelated, setKNeig)*)
 								val nodesKMoveRelated = addList(emptyStr,List.filter moveRelatedFun listKNeig)(*intersection (!moveRelated, setKNeig)*)
@@ -140,14 +140,17 @@ struct
 											val nSet = add(emptyInt,n)			
 											val (x,y) = tempsInMove n (*NO SABEMOS ORDEN CORRECTO *)
 											val v = if getAlias(y) = getAlias(u) then getAlias(x) else getAlias(y)
+											val _ = print("x:"^x^" getAlias(x):"^x^" y:"^y^" getAlias(y):"^y^"\n")
 											val vSet = add(emptyStr,v)
 											val _ = activeMoves := difference(!activeMoves,nSet)
 											val _ = frozenMoves := union (!frozenMoves,nSet)
 											val cond = equal(nodeMoves(v),emptyInt) andalso (buscoEnTabla(v,!degree) < K)
-										    val _ =  if cond then ((*freezeWorkSet := difference(!freezeWorkSet,vSet);*)
-																  freezeWorkSet := difference(!freezeWorkSet,vSet);																	
+											(* esta condicion la agregué yo*)
+											val cond2 = cond andalso not (member(!precoloredSet,v))
+										    val _ =  if cond2 then ((*freezeWorkSet := difference(!freezeWorkSet,vSet);*)
+																  freezeWorkSet := difference(!freezeWorkSet,vSet);													
 											                      simplifyWorkSet := union(!simplifyWorkSet, vSet);		
-											                      print("Estoy en el app de freezemoves\n");invNodes();									                      											                      
+											                      print("Estoy en el app de freezemoves\n");invNodes();          
 																  simplifyWorkSet2 := union (!simplifyWorkSet2,vSet)) else ()
 									    in () end	
 							val _ = print("\nANTES DE freezeMoves: EJECUTO INVARIANTE NODOS\n")
@@ -172,10 +175,16 @@ struct
 	fun addEdge (u,v) = let
 							val vSet = Splayset.singleton String.compare v 
 							val uSet = Splayset.singleton String.compare u
-						in (if u = v then () else (interf := tabRInserta(u,union(buscoEnTabla(v,!interf),vSet),!interf);
-												  interf := tabRInserta(v,union(buscoEnTabla(u,!interf),uSet),!interf);
-						                          degree := tabRInserta(u,buscoEnTabla(u,!degree)+1,!degree);
-						                          degree := tabRInserta(v,buscoEnTabla(v,!degree)+1,!degree))) end
+						in (if not (u = v) andalso not (areAdj(u,v)) then 
+													 (interf := tabRInserta(u,union(buscoEnTabla(u,!interf),vSet),!interf);
+													 interf := tabRInserta(v,union(buscoEnTabla(v,!interf),uSet),!interf);
+													 (if not (member(!precoloredSet, u)) then 
+																(interfNoPrec := tabRInserta(u,union(buscoEnTabla(u,!interfNoPrec),vSet),!interfNoPrec);
+																degree := tabRInserta(u,buscoEnTabla(u,!degree)+1,!degree)) else ());
+													 (if not (member(!precoloredSet, v)) then 
+																(interfNoPrec := tabRInserta(v,union(buscoEnTabla(v,!interfNoPrec),uSet),!interfNoPrec);
+																degree := tabRInserta(v,buscoEnTabla(v,!degree)+1,!degree)) else ()))			
+																else ()) end
 				
 	fun combine (u,v) = let 
 							val vSet = Splayset.singleton String.compare v
@@ -214,7 +223,8 @@ struct
 											val _ = simplifyWorkSet := delete(!simplifyWorkSet,n)
 											val _ = selectStack := !selectStack @ [n]
 											val adjN = adjacent n
-											val _ = decrementDegree (adjN)	
+											(* esta condición la agregué yo*)
+											val _ = decrementDegree (difference(adjN,!precoloredSet))	
 											in  simplify () end));
 					   print("\nDESPUES DE SIMPLIFY: EJECUTO INVARIANTE NODOS\n");
 					   invNodes();
@@ -238,11 +248,15 @@ struct
 						val x = getAlias(x')
 						val y = getAlias(y')
 						val _ = print("x:"^x'^" getAlias(x):"^x^" y:"^y'^" getAlias(y):"^y^"\n")
+						(* si hay precoloreado, que sea u*)
 						val (u,v) = if member(!precoloredSet,y) then (y,x) else (x,y)
+						val _ = if  member(!precoloredSet,y) then print(y^" es precoloreado") else ()
 						val _ = workSetMoves := delete (!workSetMoves,m)
 						val cond1 = member(!precoloredSet,v) orelse areAdj(u,v)
+						val uIsMember = member(!precoloredSet,u)
+						val _ = print("v : "^v^"\n")
 						val adjV = adjacent(v)
-						val adjU = adjacent(u)
+						val adjU = if uIsMember then emptyStr else adjacent(u)
 						val allAreOk = List.foldl (fn (b1,b2) => b1 andalso b2) true (List.map (fn t => ok(t,u)) (listItems adjV))
 						val uIsMember = member(!precoloredSet,u)
 						val cond2 = (uIsMember andalso allAreOk) orelse ((not uIsMember) andalso conservative(union(adjV,adjU)))
@@ -488,7 +502,6 @@ struct
 		let 
 			val _ = tigerbuild.build(l,1)				
 			val _ = spilledNodes := []
-			val _ = workSetMoves := emptyInt
 			
 			val _ = initial := inicial
 			(*makeWorkList()*)
@@ -531,8 +544,6 @@ struct
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
 			val _ = setOfAllTemps := addList (emptyStr, tabClaves (!degree))
-			val _ = precoloredList := ["rbx", sp,"rdi", "rsi", "rdx", "rcx", "r8", "r9", fp, "rax","r10","r11","r12","r13","r14","r15"]
-			val _ = precoloredSet := addList(emptyStr, !precoloredList)
 			
 			val inicial = difference(!setOfAllTemps,!precoloredSet)
 			val _ = initial := inicial

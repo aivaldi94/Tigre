@@ -16,13 +16,6 @@ val degree : (tigertemp.temp,int) tigertab.Tabla ref
 (* color: tabla que asocia a cada nodo con su color elegido por el algoritmo *)
 val color : (tigertemp.temp ,tigertemp.temp) tigertab.Tabla ref
 
-
-(* precoloredList: lista de nodos precoloreados*)
-val precoloredList : tigertemp.temp list ref
-
-(* precoloredSet: conjunto de nodos precoloreados*)
-val precoloredSet : tigertemp.temp Splayset.set ref
-
 (*spilledNodes: nodos marcados para hacer spill *)
 val spilledNodes : tigertemp.temp list ref
 

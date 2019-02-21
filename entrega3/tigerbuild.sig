@@ -55,6 +55,9 @@ val interfNoPrec : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla 
 (*dado un temporal, devuelve true si pertenece al conjunto de moveRelated*)
 val isMoveRelated : tigertemp.temp -> bool
 
+(* Lista y conjuntos de precoloreados*)
+val precoloredList : string list ref
+val precoloredSet : string Splayset.set ref
 (*funcion unificadora. construye "grafo" de flujo y "grafo" de interferencia *)
 val build : (tigerassem.instr list * int) -> unit
 

@@ -27,10 +27,9 @@ struct
 	val moveRelated = ref empty
 	val workSetMoves = ref (emptyInt) (* intrucciones moves *)
 	val moveSet = ref (tabNueva()) (*equivale a moveList del libro. pagina 243  *)
-	val allMoves = ref (emptyInt)
-	
-	val precoloredList1 = ref ([])
-	val precoloredSet1 = ref (emptyStr)
+	val allMoves = ref (emptyInt)	
+	val precoloredList = ref ([])
+	val precoloredSet = ref (emptyStr)
 	
 	(*--------------*)
 
@@ -52,6 +51,9 @@ struct
 	
 	fun build (instrList : instr list,pFlag) = 
 	let
+	
+		val _ = precoloredList := ["rbx", sp,"rdi", "rsi", "rdx", "rcx", "r8", "r9", fp, "rax","r10","r11","r12","r13","r14","r15"]
+		val _ = precoloredSet := addList(emptyStr, !precoloredList)
 	
 	(* ---------------------------------------------------------------------------------------------------------- *)
 		
@@ -264,9 +266,7 @@ struct
 		
 		val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf)) else ()
 		
-		val _ = precoloredList1 := !precoloredList1 @ ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
-		val _ = precoloredSet1 := addList(emptyStr,!precoloredList1)
-		val _ = interfNoPrec := tabInserList(tabNueva(),List.filter (fn (t,st) => not(member(!precoloredSet1,t))) (tabAList(!interf)))
+		val _ = interfNoPrec := tabInserList(tabNueva(),List.filter (fn (t,_) => not(member(!precoloredSet,t))) (tabAList(!interf)))
 		
 	(* ---------------------------------------------------------------------------------------------------------- *)			
 
@@ -283,8 +283,9 @@ struct
 												val sSet = findSet (s,tabMoves)	
 												
 												(*sMoves seria workSetMoves que en el libro es workListMoves*)
-												(*contiene los numeros de instruccion que son moves*)																						
-												val sMoves' = union(sMoves, nSet)
+												(*contiene los numeros de instruccion que son moves*)
+												val bothArePrec = member(!precoloredSet,d) andalso member(!precoloredSet,s)					
+												val sMoves' = if bothArePrec then sMoves else union(sMoves, nSet)
 												(*tabMoves seria moveSet que en el libro equivale a wirkList*)
 												(* es una tabla que asocia cada temp con el conjunto de instruciones donde aparece siendo dst o fuente en un move*)
 												(*al parecer esto estaba bien*)
