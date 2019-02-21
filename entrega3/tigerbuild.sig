@@ -50,6 +50,8 @@ val workSetMoves: int Splayset.set ref
 val moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref
 (* tabla de interferencias *)
 val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
+(* tabla de interferencias donde no estan los nodos precoloreados como claves *)
+val interfNoPrec : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
 (*dado un temporal, devuelve true si pertenece al conjunto de moveRelated*)
 val isMoveRelated : tigertemp.temp -> bool
 

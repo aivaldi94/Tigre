@@ -77,7 +77,7 @@ struct
 								val l2 = map (fn n => intersection (n,!activeMoves)) l1 
 							in List.app (fn n => (activeMoves := difference(!activeMoves,n); workSetMoves := union (!workSetMoves, n))) l2 end
 							
-	fun adjacent n = difference(buscoEnTabla (n,!interf),union(addList(emptyStr,!selectStack),!coalescedNodes))
+	fun adjacent n = difference(buscoEnTabla (n,!interfNoPrec),union(addList(emptyStr,!selectStack),!coalescedNodes))
 	 
 	fun minusOneSet s x = x-1 
 														
@@ -340,7 +340,7 @@ struct
 											val n = hd (stack) 
 											val stack' = tl(stack)
 											val _ = selectStack := stack'
-											val adj = buscoEnTabla (n,!interf) : tigertemp.temp Splayset.set
+											val adj = buscoEnTabla (n,!interfNoPrec) : tigertemp.temp Splayset.set
 											val uni = union (cNodes, !precoloredSet) : tigertemp.temp Splayset.set
 											(*val _ = print "\nuni es\n"
 											val _ = List.app print (listItems uni)*)

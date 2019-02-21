@@ -23,10 +23,14 @@ struct
 	val liveIn = ref (tabNueva())
 	val liveOut = ref (tabNueva())
 	val interf = ref (tabNueva())
+	val interfNoPrec = ref (tabNueva())
 	val moveRelated = ref empty
 	val workSetMoves = ref (emptyInt) (* intrucciones moves *)
 	val moveSet = ref (tabNueva()) (*equivale a moveList del libro. pagina 243  *)
 	val allMoves = ref (emptyInt)
+	
+	val precoloredList1 = ref ([])
+	val precoloredSet1 = ref (emptyStr)
 	
 	(*--------------*)
 
@@ -259,6 +263,10 @@ struct
 		val _ = interf := fillInterf(lastInstrNumber,tabNueva())
 		
 		val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf)) else ()
+		
+		val _ = precoloredList1 := !precoloredList1 @ ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
+		val _ = precoloredSet1 := addList(emptyStr,!precoloredList1)
+		val _ = interfNoPrec := tabInserList(tabNueva(),List.filter (fn (t,st) => not(member(!precoloredSet1,t))) (tabAList(!interf)))
 		
 	(* ---------------------------------------------------------------------------------------------------------- *)			
 
