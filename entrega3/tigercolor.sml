@@ -250,18 +250,14 @@ struct
 						val _ = print("x:"^x'^" getAlias(x):"^x^" y:"^y'^" getAlias(y):"^y^"\n")
 						(* si hay precoloreado, que sea u*)
 						val (u,v) = if member(!precoloredSet,y) then (y,x) else (x,y)
+						val uIsMember = member(!precoloredSet,u)
+						val vIsMember = member(!precoloredSet,v)
 						val _ = if  member(!precoloredSet,y) then print(y^" es precoloreado") else ()
 						val _ = workSetMoves := delete (!workSetMoves,m)
-						val cond1 = member(!precoloredSet,v) orelse areAdj(u,v)
-						val uIsMember = member(!precoloredSet,u)
-						val _ = print("v : "^v^"\n")
-						val _ = print ("si\n")
-						(* aca esta llegando v como un precoloreaddo y eso hace que falle adjacent*)
-						val adjV = adjacent(v) (*esto no lo deberiamos hacer aca porque si es precoloreado va a fallar, deberia estar dentro del ultimo caso.*)
-						val _ = print ("no\n")
+						val cond1 = vIsMember orelse areAdj(u,v)
 						val adjU = if uIsMember then emptyStr else adjacent(u)
+						val adjV = if vIsMember then emptyStr else adjacent(v)
 						val allAreOk = List.foldl (fn (b1,b2) => b1 andalso b2) true (List.map (fn t => ok(t,u)) (listItems adjV))
-						val uIsMember = member(!precoloredSet,u)
 						val cond2 = (uIsMember andalso allAreOk) orelse ((not uIsMember) andalso conservative(union(adjV,adjU)))
 						val _ = if (u = v) then (coalescedMoves := union(!coalescedMoves,mSet);
 												 addWorkList(u)) else (if cond1 then (constrainedMoves := union(!constrainedMoves,mSet);
@@ -343,13 +339,11 @@ struct
 						       					  									
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
-						
 								0 => (let 
-								      val _ = (print("stack:\n"); List.app (fn n => print (n^"\n")) (!selectStack))
-								      val _ = print("fin stack\n")
-								      fun f (n,tab) = (print (n^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
+									val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
+								      fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
 								      val _ = color := Splayset.foldl f (!color) (!coalescedNodes) 
-								      val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))							     
+								      val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))					     
 								      in cNodes end)
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
