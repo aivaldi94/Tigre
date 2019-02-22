@@ -341,6 +341,8 @@ struct
 	fun assignColors (cNodes, stack) = case (length (stack)) of
 								0 => (let 
 									val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
+									val _ = (print ("Coalesced: "); Splayset.app  (fn n => print(getAlias(n)^" ")) (!coalescedNodes))
+									val _ = (print ("Spillednodes: ");List.app  (fn n => print(n^" ")) (!spilledNodes))
 								      fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
 								      val _ = color := Splayset.foldl f (!color) (!coalescedNodes) 
 								      val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))					     
