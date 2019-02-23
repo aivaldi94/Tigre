@@ -83,7 +83,7 @@ struct
 						val booleanList = map (fn n => buscoEnTabla(n,!degree) >= K) list
 					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSpill" end
 						
-	fun invSimplify() = let
+	fun invSimplify() = let (* invariante relajado*)
 						val list = listItems (!simplifyWorkSet)
 						fun f n = let
 									val _ = print(n^" ")
@@ -91,7 +91,7 @@ struct
 									val _ = if degreeLow then print("El grado es menor a K ") else print("El grado es mayor o igual a K ")
 									val isEmpty = equal(intersection(findSetInt(n,!moveSet), union(!activeMoves, !workSetMoves)),emptyInt)
 									val _ = if isEmpty then print("Es vacio\n") else print ("No es vacio\n")
-								 in degreeLow andalso isEmpty end
+								 in (*degreeLow andalso*) isEmpty end
 						val booleanList = map f list
 					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSimplify" end
 					 
@@ -394,14 +394,15 @@ struct
 						       					  									
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
-								0 => (let 
-									val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
-									val _ = (print ("Coalesced: "); Splayset.app  (fn n => print(getAlias(n)^" ")) (!coalescedNodes))
-									val _ = (print ("Spillednodes: ");List.app  (fn n => print(n^" ")) (!spilledNodes))
-								     val _ = print("Alias de coalescedNodes\n")
-								     fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
-								      val _ = color := Splayset.foldl f (!color) (!coalescedNodes) 
-								      val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))					     
+								0 => (let (*si hay algún spill efectivo, descarto todos los coalesced *)
+										(*if equal(!coalescedNodes, emptyStr) then*)
+											val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
+											val _ = (print ("Coalesced: "); Splayset.app  (fn n => print(getAlias(n)^" ")) (!coalescedNodes))
+											val _ = (print ("Spillednodes: ");List.app  (fn n => print(n^" ")) (!spilledNodes))
+											val _ = print("Alias de coalescedNodes\n")
+											fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
+											val _ = color := Splayset.foldl f (!color) (!coalescedNodes) 
+											val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))					     
 								      in cNodes end)
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
