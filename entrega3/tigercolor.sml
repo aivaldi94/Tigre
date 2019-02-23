@@ -30,6 +30,15 @@ struct
 	val frozenMoves = ref(emptyInt) 
 	val setOfAllTemps = ref(emptyStr) 
 
+
+	fun findSetInt (t : temp, tabla) = (case tabBusca (t,tabla) of
+											NONE => emptyInt
+											| SOME c => c)
+											
+	fun findSetStr (t : temp, tabla) = (case tabBusca (t,tabla) of
+											NONE => emptyStr
+											| SOME c => c)	
+											
 	(**********************************************************************************************************)
 	fun invNodes() = let
 						val listNodes = listItems (!setOfAllTemps)
@@ -74,16 +83,28 @@ struct
 						val booleanList = map (fn n => buscoEnTabla(n,!degree) >= K) list
 					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSpill" end
 						
-	
-	(**********************************************************************************************************)
-																							
-	fun findSetInt (t : temp, tabla) = (case tabBusca (t,tabla) of
-											NONE => emptyInt
-											| SOME c => c)
-											
-	fun findSetStr (t : temp, tabla) = (case tabBusca (t,tabla) of
-											NONE => emptyStr
-											| SOME c => c)											
+	fun invSimplify() = let
+						val list = listItems (!simplifyWorkSet)
+						fun f n = let
+									val _ = print(n^" \n")
+									val degreeLow = buscoEnTabla(n,!degree) < K
+									val _ = if degreeLow then print("El grado es menor a K") else print("El grado es mayor o igual a K")
+									val isEmpty = equal(intersection(findSetInt(n,!moveSet), union(!activeMoves, !workSetMoves)),emptyInt)
+								 in degreeLow andalso isEmpty end
+						val booleanList = map f list
+					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSimplify" end
+					 
+	fun invFreeze() = let
+						val list = listItems (!simplifyWorkSet)
+						fun f n = let
+									val _ = print(n^" \n")
+									val degreeLow = buscoEnTabla(n,!degree) < K
+									val _ = if degreeLow then print("El grado es menor a K") else print("El grado es mayor o igual a K")
+									val isNotEmpty = not (equal(intersection(findSetInt(n,!moveSet), union(!activeMoves, !workSetMoves)),emptyInt))
+								 in degreeLow andalso isNotEmpty end
+						val booleanList = map f list
+					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSimplify" end
+	(***********************************************************************************************************)										
 											
     fun nodeMoves n = intersection (findSetInt(n,!moveSet), union(!activeMoves,!workSetMoves))
 	
@@ -125,7 +146,7 @@ struct
 								
 								val _ = freezeWorkSet := union(!freezeWorkSet,nodesKMoveRelated)
 								val _ = simplifyWorkSet := union (!simplifyWorkSet,nodesKNoMoveRelated)	
-								val _ = (print("saliendo de drecrement\n");invNodes();invDegree();invSpill())
+								val _ = (print("saliendo de drecrement\n");invNodes();invDegree();invSpill();invSimplify())
 								in () end 
 	
     fun getAlias (t) = if member(!coalescedNodes,t) then getAlias(buscoEnTabla(t,!alias)) else t                               
@@ -143,8 +164,7 @@ struct
 							val uSet = add(emptyStr,u)
 						in (if cond then (freezeWorkSet := difference(!freezeWorkSet,uSet);
 										  simplifyWorkSet := union(!simplifyWorkSet,uSet);
-										  simplifyWorkSet2 := union (!simplifyWorkSet2,uSet))	
-
+										  simplifyWorkSet2 := union (!simplifyWorkSet2,uSet))
 						                  else ()) end	
 	
 	
@@ -176,7 +196,6 @@ struct
 							val _ = print("\nANTES DE freezeMoves: EJECUTO INVARIANTE MOVES\n")
 							val _ = invMoves()
 							val _ = print ("\nANTES DE freezeMoves: OK INVARIANTE MOVES\n")
-							
 							val _ = Splayset.app aux (nodeMoves(u))
 							
 							val _ = print("\nDESPUES DE freezeMoves: EJECUTO INVARIANTE NODOS\n")
@@ -184,8 +203,7 @@ struct
 							val _ = print ("\nDESPUES DE freezeMoves: OK INVARIANTE NODOS\n")
 							val _ = print("\nDESPUES DE freezeMoves: EJECUTO INVARIANTE MOVES\n")
 							val _ = invMoves()
-							val _ = print ("\nDESPUES DE freezeMoves: OK INVARIANTE MOVES\n")														
-						
+							val _ = print ("\nDESPUES DE freezeMoves: OK INVARIANTE MOVES\n")						
 						in () end
 						  										
     
@@ -235,12 +253,14 @@ struct
 	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
 	  														
 	
-	fun simplify () = (print("\nANTES DE SIMPLIFY: EJECUTO INVARIANTE NODOS\n");
-					   invNodes();
-					   print ("\nANTES DE SIMPLIFY: OK INVARIANTE NODOS\n");
-					   print("\nANTES DE SIMPLIFY: EJECUTO INVARIANTE MOVES\n");
-					   invMoves();
-					   print ("\nANTES DE SIMPLIFY: OK INVARIANTE MOVES\n");
+	fun simplify () = (print("\nANTES DE SIMPLIFY:\n");
+						invNodes();
+						invMoves();
+						invDegree();
+						invSpill();
+					    invSimplify();
+					    invFreeze();
+					   print ("\nANTES DE SIMPLIFY:\n");
 					  (case (numItems(!simplifyWorkSet)) of 
 								0 => repeatUntil()
 								| _ => (let 
@@ -251,22 +271,25 @@ struct
 											(* esta condición la agregué yo*)
 											val _ = decrementDegree (difference(adjN,!precoloredSet))	
 											in  simplify () end));
-					   print("\nDESPUES DE SIMPLIFY: EJECUTO INVARIANTE NODOS\n");
-					   invNodes();
-					   print ("\nDESPUES DE SIMPLIFY: OK INVARIANTE NODOS\n");
-					   print("\nDESPUES DE SIMPLIFY: EJECUTO INVARIANTE MOVES\n");
-					   invMoves();
-					   print ("\nDESPUES DE SIMPLIFY: OK INVARIANTE MOVES\n"))
+					   print("\nDESPUES DE SIMPLIFY:\n");
+						invNodes();
+						invMoves();
+						invDegree();
+						invSpill();
+					    invSimplify();
+					    invFreeze();
+					   print ("\nDESPUES DE SIMPLIFY: \n"))
 						
 						
 	and coalesce ()	= let 
-						val _ = print("\nANTES DE coalesce: EJECUTO INVARIANTE NODOS\n")
+						val _ = print("\nANTES DE coalesce: \n")
 					    val _ = invNodes()
-					    val _ = print ("\nANTES DE coalesce: OK INVARIANTE NODOS\n")
-					    val _ = print("\nANTES DE coalesce: EJECUTO INVARIANTE MOVES\n")
 					    val _ = invMoves()
-					    val _ = print ("\nANTES DE coalesce: OK INVARIANTE MOVES\n")
 					    val _ = invDegree()
+					    val _ = invSpill()
+					    val _ = invSimplify()
+					    val _ = invFreeze()
+					    val _ = print ("\nANTES DE coalesce:\n")
 						val m = hd (listItems(!workSetMoves))
 						val mSet = Splayset.singleton Int.compare m
 						val (x',y') = tempsInMove m (*NO SABEMOS ORDEN CORRECTO *)
@@ -293,21 +316,24 @@ struct
 																					 addWorkList(u);
 																					invDegree())
 																					 else activeMoves := union(!activeMoves,mSet)))
-						val _ = print("\nDESPUES DE coalesce: EJECUTO INVARIANTE NODOS\n")
+						val _ = print("\nDESPUES DE coalesce: \n")
 						val _ = invNodes()
-						val _ = print ("\nDESPUES DE coalesce: OK INVARIANTE NODOS\n")
-						val _ = print("\nDESPUES DE coalesce: EJECUTO INVARIANTE MOVES\n")
 						val _ = invMoves()
-						val _ = print ("\nDESPUES DE coalesce: OK INVARIANTE MOVES\n")
 						val _ = invDegree()
+						val _ = invSpill()
+					    val _ = invSimplify()
+					    val _ = invFreeze()
+						val _ = print ("\nDESPUES DE coalesce:\n")
 					in repeatUntil() end
     
     and freeze () = let
 						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")
 						val _ = invNodes()
-						val _ = print ("\nANTES DE freeze: OK INVARIANTE NODOS\n")
-						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE MOVES\n")
 						val _ = invMoves()
+						val _ = invDegree()
+						val _ = invSpill()
+					    val _ = invSimplify()
+					    val _ = invFreeze()
 						val _ = print ("\nANTES DE freeze: OK INVARIANTE MOVES\n")
 						    
 						val u = hd (listItems(!freezeWorkSet))
@@ -318,35 +344,36 @@ struct
 	
 						val _ = print("\nDESPUES DE freeze: EJECUTO INVARIANTE NODOS\n")
 						val _ = invNodes()
-						val _ = print ("\nDESPUES DE freeze: OK INVARIANTE NODOS\n")
-						val _ = print("\nDESPUES DE freeze: EJECUTO INVARIANTE MOVES\n")
 						val _ = invMoves()
+						val _ = invDegree()
+						val _ = invSpill()
+					    val _ = invSimplify()
+					    val _ = invFreeze()
 						val _ = print ("\nDESPUES DE freeze: OK INVARIANTE MOVES\n")
-
-
 					 in repeatUntil() end
   												
 	and selectSpill () = let
-							val _ = print("\nANTES DE selectSpill: EJECUTO INVARIANTE NODOS\n")
-						    val _ = invNodes()
-						    val _ = print ("\nANTES DE selectSpill: OK INVARIANTE NODOS\n")
-						    val _ = print("\nANTES DE selectSpill: EJECUTO INVARIANTE MOVES\n")
-						    val _ = invMoves()
-						    val _ = print ("\nANTES DE selectSpill: OK INVARIANTE MOVES\n")
-						    val _ = invSpill()
+							val _ = print("\nANTES DE selectSpill:\n")
+							val _ = invNodes()
+							val _ = invMoves()
+							val _ = invDegree()
+							val _ = invSpill()
+							val _ = invSimplify()
+							val _ = invFreeze()
+						    val _ = print ("\nANTES DE selectSpill:\n")
 							val m = hd(listItems (!spillWorkSet))
 							val mSet = add(emptyStr,m)							
 							val _ = spillWorkSet := difference (!spillWorkSet,mSet)
 							val _ = simplifyWorkSet := union (!simplifyWorkSet,mSet)
 							val _ = freezeMoves(m)
-							
-							val _ = print("\nDESPUES DE selectSpill: EJECUTO INVARIANTE NODOS\n")
+							val _ = print("\nDESPUES DE selectSpill: \n")
 							val _ = invNodes()
-							val _ = print ("\nDESPUES DE selectSpill: OK INVARIANTE NODOS\n")
-							val _ = print("\nDESPUES DE selectSpill: EJECUTO INVARIANTE MOVES\n")
 							val _ = invMoves()
+							val _ = invDegree()
 							val _ = invSpill()
-							val _ = print ("\nDESPUES DE selectSpill: OK INVARIANTE MOVES\n")
+							val _ = invSimplify()
+							val _ = invFreeze()
+							val _ = print ("\nDESPUES DE selectSpill:\n")
 						in repeatUntil() end
 
 	and repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) =
