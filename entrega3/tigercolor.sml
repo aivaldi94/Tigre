@@ -86,24 +86,25 @@ struct
 	fun invSimplify() = let
 						val list = listItems (!simplifyWorkSet)
 						fun f n = let
-									val _ = print(n^" \n")
+									val _ = print(n^" ")
 									val degreeLow = buscoEnTabla(n,!degree) < K
-									val _ = if degreeLow then print("El grado es menor a K") else print("El grado es mayor o igual a K")
+									val _ = if degreeLow then print("El grado es menor a K ") else print("El grado es mayor o igual a K ")
 									val isEmpty = equal(intersection(findSetInt(n,!moveSet), union(!activeMoves, !workSetMoves)),emptyInt)
+									val _ = if isEmpty then print("Es vacio\n") else print ("No es vacio\n")
 								 in degreeLow andalso isEmpty end
 						val booleanList = map f list
 					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSimplify" end
 					 
 	fun invFreeze() = let
-						val list = listItems (!simplifyWorkSet)
+						val list = listItems (!freezeWorkSet)
 						fun f n = let
-									val _ = print(n^" \n")
+									val _ = print(n^" ")
 									val degreeLow = buscoEnTabla(n,!degree) < K
-									val _ = if degreeLow then print("El grado es menor a K") else print("El grado es mayor o igual a K")
+									val _ = if degreeLow then print("El grado es menor a K\n") else print("El grado es mayor o igual a K\n")
 									val isNotEmpty = not (equal(intersection(findSetInt(n,!moveSet), union(!activeMoves, !workSetMoves)),emptyInt))
 								 in degreeLow andalso isNotEmpty end
 						val booleanList = map f list
-					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSimplify" end
+					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invinvFreeze" end
 	(***********************************************************************************************************)										
 											
     fun nodeMoves n = intersection (findSetInt(n,!moveSet), union(!activeMoves,!workSetMoves))
@@ -508,21 +509,20 @@ struct
 															val _ = spilledNodes := tl(!spilledNodes)
 															val InFrame k = allocLocal f true
 															val (instructions, temps) = forEachSpilled(linstr,n,k)
-														in rewriteProgram(instructions,f,ltemp@temps) end														
-															
+														in rewriteProgram(instructions,f,ltemp@temps) end		
 	fun makeWorkList (ini) = let
 								val iniList = listItems ini
 								
 								val greaterEqualKSet = addList(emptyStr,List.filter (fn n => buscoEnTabla(n,!degree) >= K) iniList)
-								val _ = spillWorkSet := union(!spillWorkSet,greaterEqualKSet)
+								val _ = spillWorkSet := greaterEqualKSet
 								
 								val lowerKSet = difference(ini,greaterEqualKSet)
 								val lowerKList = listItems lowerKSet
 								
 								val lowerMoveRelSet = addList(emptyStr, List.filter (fn n => moveRelatedFun(n)) lowerKList)
-								val _ = freezeWorkSet := union(!freezeWorkSet,lowerMoveRelSet)
+								val _ = freezeWorkSet := lowerMoveRelSet
 								val lowerNonMoveRelSet = difference	(lowerKSet,lowerMoveRelSet)
-								val _ = simplifyWorkSet := union (!simplifyWorkSet,lowerNonMoveRelSet)
+								val _ = simplifyWorkSet := lowerNonMoveRelSet
 								val _ = simplifyWorkSet2 := union (!simplifyWorkSet2,lowerNonMoveRelSet)
 								val launion = union(!spillWorkSet,union(!simplifyWorkSet,!freezeWorkSet))
 								val lainter = intersection(!spillWorkSet,intersection(!simplifyWorkSet,!freezeWorkSet))
