@@ -44,9 +44,6 @@ val frozenMoves : int Splayset.set ref
 (* conjunto de todos los temporales existentes*)
 val setOfAllTemps : tigertemp.temp Splayset.set ref
 
-(*registersSet: conjunto de registros de la arquitectura (son los registers de frame pero pasados a conjunto) *)
-val registersSet : tigertemp.temp Splayset.set ref
-
 val nodeMoves : tigertemp.temp -> int Splayset.set
 
 val enableMoves: tigertemp.temp Splayset.set -> unit

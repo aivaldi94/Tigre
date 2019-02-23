@@ -33,6 +33,7 @@ val calldefs : tigertemp.temp list
 val callersaves : tigertemp.temp list
 val calleesaves' : tigertemp.temp list
 val registers : tigertemp.temp list
+val registersSet : tigertemp.temp Splayset.set
 (* Cambié el tipo
 val exp : access -> tigertree.exp -> tigertree.exp *)
 val exp : access -> int -> tigertree.exp
