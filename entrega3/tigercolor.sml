@@ -394,16 +394,16 @@ struct
 						       					  									
 													
 	fun assignColors (cNodes, stack) = case (length (stack)) of
-								0 => (let (*si hay algún spill efectivo, descarto todos los coalesced *)
-										(*if equal(!coalescedNodes, emptyStr) then*)
-											val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
+								0 => ( if !spilledNodes = [] then
+											(*val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
 											val _ = (print ("Coalesced: "); Splayset.app  (fn n => print(getAlias(n)^" ")) (!coalescedNodes))
 											val _ = (print ("Spillednodes: ");List.app  (fn n => print(n^" ")) (!spilledNodes))
-											val _ = print("Alias de coalescedNodes\n")
-											fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
-											val _ = color := Splayset.foldl f (!color) (!coalescedNodes) 
-											val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))					     
-								      in cNodes end)
+											val _ = print("Alias de coalescedNodes\n")*)
+												(let fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
+													val _ = color := Splayset.foldl f (!color) (!coalescedNodes)
+													val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))
+												 in cNodes end)		
+											else cNodes) (*si hay algún spill efectivo, descarto todos los coalesced *)
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
 										(let 
