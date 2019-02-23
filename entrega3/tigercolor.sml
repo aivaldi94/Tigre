@@ -54,6 +54,26 @@ struct
 									val _ = if suma = 1 then () else raise Fail "invMoves"
 								in () end
 					 in List.app f listMoves end	
+					 
+	fun invDegree() = let
+						val set = union(!simplifyWorkSet, union(!freezeWorkSet,!spillWorkSet))
+						val list = listItems(set)
+						fun f n = let
+									val adjN = buscoEnTabla(n,!interfNoPrec)
+									val set = union(!precoloredSet, union(!simplifyWorkSet, union(!freezeWorkSet, !spillWorkSet)))
+								   in numItems(intersection(adjN,set)) end
+						val degreeList = map f list
+						val degreeList2 = map (fn n => buscoEnTabla(n,!degree)) list
+						fun equalLists [] [] = true
+							| equalLists (x::xs) (y::ys) = if x=y then equalLists xs ys else false
+							| equalLists _ _ = false 
+					  in if (equalLists degreeList degreeList2) then () else raise Fail "invDegree" end
+					  
+	fun invSpill() = let
+						val list = listItems (!spillWorkSet)
+						val booleanList = map (fn n => buscoEnTabla(n,!degree) >= K) list
+					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invSpill" end
+						
 	
 	(**********************************************************************************************************)
 																							
@@ -80,7 +100,7 @@ struct
 	fun minusOneSet s x = x-1 
 														
 	fun decrementDegree (s) = let 		
-								val _ = (print ("entrando a drecrement\n");invNodes())
+								val _ = (print ("entrando a drecrement\n");invNodes();invSpill())
 								val listTemps = listItems s
 								val listKNeig = List.filter (fn n => (buscoEnTabla(n,!degree)) = K) listTemps		
 														
@@ -105,9 +125,7 @@ struct
 								
 								val _ = freezeWorkSet := union(!freezeWorkSet,nodesKMoveRelated)
 								val _ = simplifyWorkSet := union (!simplifyWorkSet,nodesKNoMoveRelated)	
-								val _ = if equal (emptyStr, intersection (!simplifyWorkSet2,nodesKNoMoveRelated)) then () else raise Fail "agrego algo que ya estaba decrement"
-								val _ = simplifyWorkSet2 := union (!simplifyWorkSet2,nodesKNoMoveRelated)	
-								val _ = (print("saliendo de drecrement\n");invNodes() )
+								val _ = (print("saliendo de drecrement\n");invNodes();invDegree();invSpill())
 								in () end 
 	
     fun getAlias (t) = if member(!coalescedNodes,t) then getAlias(buscoEnTabla(t,!alias)) else t                               
@@ -125,7 +143,6 @@ struct
 							val uSet = add(emptyStr,u)
 						in (if cond then (freezeWorkSet := difference(!freezeWorkSet,uSet);
 										  simplifyWorkSet := union(!simplifyWorkSet,uSet);
-						                  (if member(!simplifyWorkSet2,u) then raise Fail ("agrego algo que ya estaba addWorkLis"^u) else ());
 										  simplifyWorkSet2 := union (!simplifyWorkSet2,uSet))	
 
 						                  else ()) end	
@@ -175,30 +192,38 @@ struct
 	fun addEdge (u,v) = let
 							val vSet = Splayset.singleton String.compare v 
 							val uSet = Splayset.singleton String.compare u
-						in (if not (u = v) andalso not (areAdj(u,v)) then 
-													 (interf := tabRInserta(u,union(buscoEnTabla(u,!interf),vSet),!interf);
+						in ((if not (u = v) andalso not (areAdj(u,v)) then 
+													 (print("no son iguales ni adjacentes\n");
+													 interf := tabRInserta(u,union(buscoEnTabla(u,!interf),vSet),!interf);
 													 interf := tabRInserta(v,union(buscoEnTabla(v,!interf),uSet),!interf);
 													 (if not (member(!precoloredSet, u)) then 
-																(interfNoPrec := tabRInserta(u,union(buscoEnTabla(u,!interfNoPrec),vSet),!interfNoPrec);
+																(print("u no es precoloreado\n");
+																interfNoPrec := tabRInserta(u,union(buscoEnTabla(u,!interfNoPrec),vSet),!interfNoPrec);
 																degree := tabRInserta(u,buscoEnTabla(u,!degree)+1,!degree)) else ());
 													 (if not (member(!precoloredSet, v)) then 
-																(interfNoPrec := tabRInserta(v,union(buscoEnTabla(v,!interfNoPrec),uSet),!interfNoPrec);
+																(print("v no es precoloreado\n");
+																interfNoPrec := tabRInserta(v,union(buscoEnTabla(v,!interfNoPrec),uSet),!interfNoPrec);
 																degree := tabRInserta(v,buscoEnTabla(v,!degree)+1,!degree)) else ()))			
-																else ()) end
+																else ())) end
 				
 	fun combine (u,v) = let 
+							val _ = print ("Entrando a combine\n")
+							val _ = (invDegree();invSpill())
 							val vSet = Splayset.singleton String.compare v
 							val uSet = Splayset.singleton String.compare u
 							val _ = if member (!freezeWorkSet, v) then freezeWorkSet := difference (!freezeWorkSet, vSet) else spillWorkSet := difference (!spillWorkSet,vSet)
 							val _ = (print("Agrego el nodo v:"^v^" a coalescedNodes u es "^u^"\n");coalescedNodes := union (!coalescedNodes,vSet))
 							val _ = alias := tabRInserta (v,u,!alias)
 							val _ = moveSet := tabRInserta(u,union(buscoEnTabla(u,!moveSet),buscoEnTabla(v,!moveSet)),!moveSet)
+							val _ = enableMoves(vSet)
 							val adj = adjacent (v)
 							val _ = Splayset.app (fn t => addEdge(t,u)) adj
-							val _ = decrementDegree(adj)
+							val _ = decrementDegree(difference(adj,!precoloredSet))
 							val cond = (buscoEnTabla(u,!degree) >= K) andalso member(!freezeWorkSet,u)
 							val _ = if cond then (freezeWorkSet := delete (!freezeWorkSet,u);
 												 spillWorkSet := union(!spillWorkSet,uSet)) else ()
+							val _ = print ("en combine\n")
+							val _ = (invDegree();invSpill())
 						in () end 	
 												  
     
@@ -241,7 +266,7 @@ struct
 					    val _ = print("\nANTES DE coalesce: EJECUTO INVARIANTE MOVES\n")
 					    val _ = invMoves()
 					    val _ = print ("\nANTES DE coalesce: OK INVARIANTE MOVES\n")
-					    
+					    val _ = invDegree()
 						val m = hd (listItems(!workSetMoves))
 						val mSet = Splayset.singleton Int.compare m
 						val (x',y') = tempsInMove m (*NO SABEMOS ORDEN CORRECTO *)
@@ -262,15 +287,20 @@ struct
 						val _ = if (u = v) then (coalescedMoves := union(!coalescedMoves,mSet);
 												 addWorkList(u)) else (if cond1 then (constrainedMoves := union(!constrainedMoves,mSet);
 																					 addWorkList(u); addWorkList(v)) else (if cond2 then (coalescedMoves := union (!coalescedMoves,mSet);
-																																		  combine(u,v); addWorkList(u)) else activeMoves := union(!activeMoves,mSet)))
+																					 invDegree();
+																					 print("llamando a combine\n");
+																					 combine(u,v); 
+																					 addWorkList(u);
+																					invDegree())
+																					 else activeMoves := union(!activeMoves,mSet)))
 						val _ = print("\nDESPUES DE coalesce: EJECUTO INVARIANTE NODOS\n")
 						val _ = invNodes()
 						val _ = print ("\nDESPUES DE coalesce: OK INVARIANTE NODOS\n")
 						val _ = print("\nDESPUES DE coalesce: EJECUTO INVARIANTE MOVES\n")
 						val _ = invMoves()
 						val _ = print ("\nDESPUES DE coalesce: OK INVARIANTE MOVES\n")
-																																			  
-					  in repeatUntil() end
+						val _ = invDegree()
+					in repeatUntil() end
     
     and freeze () = let
 						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")
@@ -284,8 +314,6 @@ struct
 						val uSet = add(emptyStr,u)
 						val _ = freezeWorkSet := difference(!freezeWorkSet, uSet)
 						val _ = simplifyWorkSet := union(!simplifyWorkSet,uSet)
-						val _ = ((if member(!simplifyWorkSet2,u) then raise Fail ("agrego algo que ya estaba freeze"^u^"\n") else ());
-																  simplifyWorkSet2 := union (!simplifyWorkSet2,uSet))
 						val _ = freezeMoves(u)
 	
 						val _ = print("\nDESPUES DE freeze: EJECUTO INVARIANTE NODOS\n")
@@ -305,13 +333,11 @@ struct
 						    val _ = print("\nANTES DE selectSpill: EJECUTO INVARIANTE MOVES\n")
 						    val _ = invMoves()
 						    val _ = print ("\nANTES DE selectSpill: OK INVARIANTE MOVES\n")
-						    
+						    val _ = invSpill()
 							val m = hd(listItems (!spillWorkSet))
 							val mSet = add(emptyStr,m)							
 							val _ = spillWorkSet := difference (!spillWorkSet,mSet)
 							val _ = simplifyWorkSet := union (!simplifyWorkSet,mSet)
-							val _ = ((if member(!simplifyWorkSet2,m) then raise Fail ("agrego algo que ya estaba selectSpill"^m) else ());
-																  simplifyWorkSet2 := union (!simplifyWorkSet2,mSet))							
 							val _ = freezeMoves(m)
 							
 							val _ = print("\nDESPUES DE selectSpill: EJECUTO INVARIANTE NODOS\n")
@@ -319,6 +345,7 @@ struct
 							val _ = print ("\nDESPUES DE selectSpill: OK INVARIANTE NODOS\n")
 							val _ = print("\nDESPUES DE selectSpill: EJECUTO INVARIANTE MOVES\n")
 							val _ = invMoves()
+							val _ = invSpill()
 							val _ = print ("\nDESPUES DE selectSpill: OK INVARIANTE MOVES\n")
 						in repeatUntil() end
 
@@ -343,7 +370,8 @@ struct
 									val _ = (print ("Tabla colores sin nodos coalesced\n");tigertab.tabPrintTempTemp(!color))
 									val _ = (print ("Coalesced: "); Splayset.app  (fn n => print(getAlias(n)^" ")) (!coalescedNodes))
 									val _ = (print ("Spillednodes: ");List.app  (fn n => print(n^" ")) (!spilledNodes))
-								      fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
+								     val _ = print("Alias de coalescedNodes\n")
+								     fun f (n,tab) = (print (n^" "^getAlias(n)^"\n"); tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
 								      val _ = color := Splayset.foldl f (!color) (!coalescedNodes) 
 								      val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))					     
 								      in cNodes end)
@@ -489,8 +517,13 @@ struct
 							val _ = spilledNodes := []
 							val _ = registersSet := emptyStr
 							val _ = coalescedNodes := emptyStr
-							val _ = workSetMoves := emptyInt
 							val _ = coloredNodes := emptyStr
+							
+							val _ = workSetMoves := emptyInt
+							val _ = coalescedMoves := emptyInt
+							val _ = constrainedMoves := emptyInt
+							val _ = frozenMoves := emptyInt
+							val _ = activeMoves := emptyInt
 						in () end
 
 	fun pintar n = (case tabBusca(n,!color) of
@@ -499,19 +532,25 @@ struct
 										
 	fun colorear'(l,f,inicial) = 
 		let 
-			val _ = tigerbuild.build(l,1)				
+			val _ = workSetMoves := emptyInt
+			val _ = coalescedMoves := emptyInt
+			val _ = constrainedMoves := emptyInt
+			val _ = frozenMoves := emptyInt
+			val _ = activeMoves := emptyInt
+			val _ = tigerbuild.build(l,1)
+			val _  = invMoves()			
+			val _ = print("Build hecho'\n")	
 			val _ = spilledNodes := []
 			
 			val _ = initial := inicial
+			
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
 			val _ = setOfAllTemps := addList (emptyStr, tabClaves (!interf))
-			val _ = precoloredList := ["rbx", "rsp","rdi", "rsi", "rdx", "rcx", "r8", "r9", "rbp", "rax","r10","r11","r12","r13","r14","r15"]
 			
 			val _ = color := fillColor(!precoloredList,!color)	
 			val _ = coalescedNodes := emptyStr
-			val _ = precoloredSet := addList(emptyStr, !precoloredList)		
-			
+			val _ = coloredNodes := emptyStr
 			
 			val _ = makeWorkList(inicial)		
 									
@@ -539,6 +578,7 @@ struct
 			
 			val _ = tigerbuild.build(l,printt)		
 			
+			val _ = invDegree()
 			
 			(*makeWorkList()*)
 			val _ = degree := tabAAplica (id,Splayset.numItems,!interf)
