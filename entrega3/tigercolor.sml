@@ -37,7 +37,11 @@ struct
 	fun findSetStr (t : temp, tabla) = (case tabBusca (t,tabla) of
 											NONE => emptyStr
 											| SOME c => c)	
-											
+	
+	fun printList [] = ()
+		| printList (z::zs) = (print(z^" ");printList zs)
+		
+	fun printSet s = printList(listItems s)											
 	(**********************************************************************************************************)
 	fun invNodes() = let
 						val listNodes = listItems (!setOfAllTemps)
@@ -115,6 +119,8 @@ struct
 							in List.app (fn n => (activeMoves := difference(!activeMoves,n); workSetMoves := union (!workSetMoves, n))) l2 end
 							
 	fun adjacent n = difference(buscoEnTabla (n,!interfNoPrec),union(addList(emptyStr,!selectStack),!coalescedNodes))
+	
+	fun adjacent' n = difference(buscoEnTabla (n,!interfNoPrec),!coalescedNodes)
 	 
 	fun minusOneSet s x = x-1 
 														
@@ -222,6 +228,8 @@ struct
 							val _ = moveSet := tabRInserta(u,union(buscoEnTabla(u,!moveSet),buscoEnTabla(v,!moveSet)),!moveSet)
 							val _ = enableMoves(vSet)
 							val adj = adjacent (v)
+							(*val adj = if v = "T17" then (print("En combine\n");adjacent') (v) else adjacent (v)*)
+							val _ = if v = "T17" then printSet(adj) else ()
 							val _ = Splayset.app (fn t => addEdge(t,u)) adj
 							val _ = decrementDegree(difference(adj,!precoloredSet))
 							val cond = (buscoEnTabla(u,!degree) >= K) andalso member(!freezeWorkSet,u)
@@ -239,7 +247,7 @@ struct
 	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
 	  														
 	
-	fun simplify () = ((*print("\nANTES DE SIMPLIFY:\n");*)
+	fun simplify () = (print("\nANTES DE SIMPLIFY:\n");
 						invNodes();
 						invMoves();
 						invDegree();
@@ -268,7 +276,7 @@ struct
 						
 						
 	and coalesce ()	= let 
-						(*val _ = print("\nANTES DE coalesce: \n")*)
+						val _ = print("\nANTES DE coalesce: \n")
 					    val _ = invNodes()
 					    val _ = invMoves()
 					    val _ = invDegree()
@@ -312,7 +320,7 @@ struct
 					in repeatUntil() end
     
     and freeze () = let
-						(*val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")*)
+						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")
 						val _ = invNodes()
 						val _ = invMoves()
 						val _ = invDegree()
@@ -338,7 +346,7 @@ struct
 					 in repeatUntil() end
   												
 	and selectSpill () = let
-							(*val _ = print("\nANTES DE selectSpill:\n")*)
+							val _ = print("\nANTES DE selectSpill:\n")
 							val _ = invNodes()
 							val _ = invMoves()
 							val _ = invDegree()
@@ -362,10 +370,10 @@ struct
 						in repeatUntil() end
 
 	and repeatDo (lengthSimplify,lengthCoalesce,lengthFreeze,lengthSelectSpill) =
-		if (lengthSimplify <> 0) then 
-			simplify() else (if (lengthCoalesce <> 0) then
-								coalesce () else (if (lengthFreeze <> 0) then
-													freeze() else (if (lengthSelectSpill <> 0) then
+		if (lengthCoalesce <> 0) then 
+			coalesce() else (if (lengthFreeze <> 0) then
+								freeze() else (if (lengthSimplify <> 0) then
+													simplify() else (if (lengthSelectSpill <> 0) then
 																	(selectSpill ()) else raise Fail "No deberia pasar (repeatDo)")))
 					   
 	and repeatUntil () = let
@@ -517,6 +525,10 @@ struct
 								val _ = if equal(emptyStr,lainter) then print ("la interseccion es vacia\n") else raise Fail "Error makeWorkList"
 								val _ = if equal(ini,launion) then print ("la union es initial\n") else raise Fail "Error makeWorkList"
 								val _ = initial := emptyStr
+									
+								val _ = (print("spillWorkSet: ");printSet(!spillWorkSet))
+								val _ = (print("\nfreezeWorkSet: ");printSet(!freezeWorkSet))
+								val _ = (print("\nssimplifyWorkSet: ");printSet(!simplifyWorkSet))
 							 in () end									
 	
 	fun initializeMoves() = let 	
