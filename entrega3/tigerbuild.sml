@@ -298,8 +298,8 @@ struct
 	val _ = workSetMoves := workSetMoves'
 	val _ = moveSet := moveSet'
 	val _ = allMoves := !workSetMoves
-	val _ = (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves)))
-	val _ = (print("\nImprimo workSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet))
+	val _ = if (pFlag = 1) then (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves))) else ()
+	val _ = if (pFlag = 1) then (print("\nImprimo workSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet)) else ()
 		   
 	in print("\n *********** OK BUILD *********** \n") end	 
 end

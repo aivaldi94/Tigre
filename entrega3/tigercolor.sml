@@ -41,8 +41,10 @@ struct
 	fun printList [] = ()
 		| printList (z::zs) = (print(z^" ");printList zs)
 		
-	fun printSet s = printList(listItems s)											
+	fun printSet s = printList(listItems s)								
+				
 	(**********************************************************************************************************)
+	
 	fun invNodes() = let
 						val listNodes = listItems (!setOfAllTemps)
 						val setOfSpilled = addList(emptyStr,!spilledNodes)
@@ -105,7 +107,8 @@ struct
 									val isNotEmpty = not (equal(intersection(findSetInt(n,!moveSet), union(!activeMoves, !workSetMoves)),emptyInt))
 								 in degreeLow andalso isNotEmpty end
 						val booleanList = map f list
-					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invinvFreeze" end
+					 in if (List.foldl (fn (b1,b2) => b1 andalso b2) true booleanList) then () else raise Fail "invFreeze" end
+					 
 	(***********************************************************************************************************)										
 											
     fun nodeMoves n = intersection (findSetInt(n,!moveSet), union(!activeMoves,!workSetMoves))
@@ -229,7 +232,7 @@ struct
 							val _ = enableMoves(vSet)
 							val adj = adjacent (v)
 							(*val adj = if v = "T17" then (print("En combine\n");adjacent') (v) else adjacent (v)*)
-							val _ = if v = "T17" then printSet(adj) else ()
+							(*val _ = if v = "T17" then printSet(adj) else ()*)
 							val _ = Splayset.app (fn t => addEdge(t,u)) adj
 							val _ = decrementDegree(difference(adj,!precoloredSet))
 							val cond = (buscoEnTabla(u,!degree) >= K) andalso member(!freezeWorkSet,u)
@@ -247,7 +250,7 @@ struct
 	  | fillColor ((x::xs),c) = tabRInserta(x,x,(fillColor (xs,c)))
 	  														
 	
-	fun simplify () = (print("\nANTES DE SIMPLIFY:\n");
+	fun simplify () = ((*print("\nANTES DE SIMPLIFY:\n");*)
 						invNodes();
 						invMoves();
 						invDegree();
@@ -276,7 +279,7 @@ struct
 						
 						
 	and coalesce ()	= let 
-						val _ = print("\nANTES DE coalesce: \n")
+						(*val _ = print("\nANTES DE coalesce: \n")*)
 					    val _ = invNodes()
 					    val _ = invMoves()
 					    val _ = invDegree()
@@ -320,7 +323,7 @@ struct
 					in repeatUntil() end
     
     and freeze () = let
-						val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")
+						(*val _ = print("\nANTES DE freeze: EJECUTO INVARIANTE NODOS\n")*)
 						val _ = invNodes()
 						val _ = invMoves()
 						val _ = invDegree()
@@ -346,7 +349,7 @@ struct
 					 in repeatUntil() end
   												
 	and selectSpill () = let
-							val _ = print("\nANTES DE selectSpill:\n")
+							(*val _ = print("\nANTES DE selectSpill:\n")*)
 							val _ = invNodes()
 							val _ = invMoves()
 							val _ = invDegree()
@@ -392,12 +395,12 @@ struct
 											val _ = (print ("Spillednodes: ");List.app  (fn n => print(n^" ")) (!spilledNodes))
 											val _ = print("Alias de coalescedNodes\n")*)
 												(let 
-													val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))
+													(*val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))*)
 													fun f (n,tab) = (tabRInserta(n,buscoEnTabla(getAlias(n),tab),tab))
 													val _ = color := Splayset.foldl f (!color) (!coalescedNodes)
-													val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))
+													(*val _ = (print ("Tabla colores\n");tigertab.tabPrintTempTemp(!color))*)
 												 in cNodes end)		
-											else ((print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes));cNodes)) (*si hay algún spill efectivo, descarto todos los coalesced *)
+											else ((*(print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes));*)cNodes)) (*si hay algún spill efectivo, descarto todos los coalesced *)
 								| _ => case (member(!precoloredSet,hd (stack))) of
 									false =>
 										(let 
@@ -421,7 +424,7 @@ struct
 											(*val _ = print "\nokColors es\n"
 											val _ = List.app print (listItems okColors)*)
 											val cNodes' = case length (listItems(okColors)) of
-														0 => (let val _ = print ("\nEL NODO SPILL ES "^n^"\n")
+														0 => (let (*val _ = print ("\nEL NODO SPILL ES "^n^"\n")*)
 																val _ = spilledNodes := n::(!spilledNodes)
 															 in cNodes end)
 														| _ => (let 
@@ -448,7 +451,7 @@ struct
 					val isDst = List.exists igual d
 					val isSrc = List.exists igual s
 				 in (case (isDst andalso isSrc) of
-					true => let val _ = print "Es fuente y destino"
+					true => let (*val _ = print "Es fuente y destino"*)
 								val newTemp = newtemp()
 								val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
 								val d' = map (fn n => if n = tmp then newTemp else n) d
@@ -459,7 +462,7 @@ struct
 							in ([newInstr1,rewInstr,newInstr2]@instructions, newTemp::temps)end
 					| false => let val newTemp = newtemp()
 								in (case isDst of
-									true => let val _ = print "Es destino"
+									true => let (*val _ = print "Es destino"*)
 												val d' = map (fn n => if n = tmp then newTemp else n) d
 												val rewInstr = OPER {assem=a,dst=d',src=s,jump=j}
 												val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,fp],jump=NONE}
@@ -497,9 +500,9 @@ struct
 														
 	(* La lista de instrucciones y el frame serán importados. La lista de temporales primera debe ser vacía*) 
 	fun rewriteProgram(linstr : instr list, f : frame, ltemp : tigertemp.temp list) = case length(!spilledNodes) of
-												0 => (print("Programa reescrito\n");printInstrList linstr;(linstr,ltemp))
+												0 => (linstr,ltemp)(*(print("Programa reescrito\n");printInstrList linstr;(linstr,ltemp))*)
 												| _ => 	let 
-															val _ = print "reescribiendo\n"
+															(*val _ = print "reescribiendo\n"*)
 															val n = hd(!spilledNodes) 
 															val _ = spilledNodes := tl(!spilledNodes)
 															val InFrame k = allocLocal f true
@@ -522,13 +525,13 @@ struct
 								val launion = union(!spillWorkSet,union(!simplifyWorkSet,!freezeWorkSet))
 								val lainter = intersection(!spillWorkSet,intersection(!simplifyWorkSet,!freezeWorkSet))
 						
-								val _ = if equal(emptyStr,lainter) then print ("la interseccion es vacia\n") else raise Fail "Error makeWorkList"
-								val _ = if equal(ini,launion) then print ("la union es initial\n") else raise Fail "Error makeWorkList"
+								(*val _ = if equal(emptyStr,lainter) then print ("la interseccion es vacia\n") else raise Fail "Error makeWorkList"
+								val _ = if equal(ini,launion) then print ("la union es initial\n") else raise Fail "Error makeWorkList"*)
 								val _ = initial := emptyStr
-									
+								(*	
 								val _ = (print("spillWorkSet: ");printSet(!spillWorkSet))
 								val _ = (print("\nfreezeWorkSet: ");printSet(!freezeWorkSet))
-								val _ = (print("\nssimplifyWorkSet: ");printSet(!simplifyWorkSet))
+								val _ = (print("\nssimplifyWorkSet: ");printSet(!simplifyWorkSet))*)
 							 in () end									
 	
 	fun initializeMoves() = let 	
@@ -559,11 +562,12 @@ struct
 										
 	fun colorear'(l,f,inicial) = 
 		let 
+			val _ = print("Estoy en colorear'. Funcion "^tigerframe.nameViejo(f)^"\n")
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
-			val _ = tigerbuild.build(l,1)
+			val _ = tigerbuild.build(l,0)
 			val _  = invMoves()	
-			val _ = print("Build hecho'\n")	
+			(*val _ = print("Build hecho'\n")	*)
 			
 			val _ = initial := inicial
 			
@@ -579,24 +583,27 @@ struct
 			val _ = repeatUntil()				
 			
 			(* imprimo la nueva tabla de interferencia*)
-			val _ = (print ("\nImprimo la nueva interfNoPrec\n");tigertab.tabPrintTempTempSet(!interfNoPrec))
+			(*val _ = (print ("\nImprimo la nueva interfNoPrec\n");tigertab.tabPrintTempTempSet(!interfNoPrec))*)
 			
 			(* assign colors*)
 			val coloredNodes = assignColors(emptyStr, !selectStack)
 
-			val _ = print "reescribiendo\n"
+			(*val _ = print "reescribiendo\n"*)
 			(* rewrite program*)
+			val _ = print("longitud de lista spilledNodes antes de llamar a rwt en colorear': "^Int.toString(length(!spilledNodes))^"\n")
 			val (instructions, temps) = rewriteProgram(l,f,[])
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
 			
-			val _ = (print("Temporales agregadoss\n");List.app print temps)
+			val _ = (print("Temporales agregados en colorear' \n");List.app print temps;print("\n"))
 			
+			(*
 			val _ = (print("Lista que es argumento de colorear' desde colorear': "); List.app (fn n => print(n^"\n")) (listItems(addList (coloredNodes, temps))))
-
+			*)
 		in if temps = [] then (pintar,instructions) else colorear'(instructions,f, initial') end	
 		
 	fun colorear (l,f,printt) = 
 		let
+			val _ = print("Estoy en colorear. Funcion "^tigerframe.nameViejo(f)^"\n")
 			(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
@@ -619,17 +626,18 @@ struct
 			val _ = repeatUntil()	
 			
 			(* imprimo la nueva tabla de interferencia*)
-			val _ = (print ("\nImprimo la nueva interfNoPrec\n");tigertab.tabPrintTempTempSet(!interfNoPrec))
+			(*al _ = (print ("\nImprimo la nueva interfNoPrec\n");tigertab.tabPrintTempTempSet(!interfNoPrec))*)
 			
 			(* assign colors*)
 			val coloredNodes = assignColors(emptyStr, !selectStack)
 
-			val _ = print "reescribiendo2\n"
+			(*val _ = print "reescribiendo2\n"*)
 			(* rewrite program*)
+			val _ = print("longitud de lista spilledNodes antes de llamar a rwt en colorear: "^Int.toString(length(!spilledNodes))^"\n")
 			val (instructions, temps) = rewriteProgram(l,f,[])
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
 			
-			val _ = (print("Temporales agregados\n");List.app print temps)
+			val _ = (print("Temporales agregados en colorear\n");List.app print temps;print("\n"))
 			 		 				
 		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, initial') end	 
 end

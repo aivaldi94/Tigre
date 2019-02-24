@@ -101,11 +101,11 @@ fun allocArg (f: frame) b =
 	let val acc = 
 		(case b of
 		true =>
-			let	val _ = print("allocARg InFrame \n")
+			let	(*val _ = print("allocARg InFrame \n")*)
 				val ret = (argsOffInicial-(!(#actualArg f)*wSz))
 				val _ = #actualArg f := !(#actualArg f)+1
 			in	InFrame ret end
-		| false => (print("allorArg InReg \n");InReg(tigertemp.newtemp())))
+		| false => ((*print("allorArg InReg \n");*)InReg(tigertemp.newtemp())))
 	in (#arguments f := !(#arguments f) @ [acc];acc) end
 	(* malloc *)
 
@@ -113,7 +113,7 @@ fun allocLocal (f: frame) b =
 	case b of
 	true =>
 		let	val ret = InFrame ((~(!(#actualLocal f))-(!(#actualArg f)))*localsGap+argsOffInicial) (* REVISAR MULTIPLICAR *)
-			val _ = print "allocLocal true"
+			(*val _ = print "allocLocal true"*)
 		in	#actualLocal f:=(!(#actualLocal f)+1); ret end
 	| false => InReg(tigertemp.newtemp())
 
@@ -149,8 +149,8 @@ fun procEntryExit1 (f : frame,body) =
 						| natToReg 5 = r9
 						| natToReg _ = raise Fail "No deberia pasar (natToReg)"				
 						
-						fun accToMove ((InReg t),n) = if n<6 then (print("inreg <6\n");MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
-						  | accToMove ((InFrame k),n) = if n<6 then (print("inframe <6  "^its(k)^"\n");MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
+						fun accToMove ((InReg t),n) = if n<6 then ((*print("inreg <6\n");*)MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
+						  | accToMove ((InFrame k),n) = if n<6 then ((*print("inframe <6  "^its(k)^"\n");*)MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
 				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
 				   
 			   
