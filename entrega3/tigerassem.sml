@@ -13,6 +13,12 @@ structure tigerassem = struct
                             dst: temp,
                             src: temp}
 
+(* Esta función de igualdad se utiliza en tigercolor, únicamente para sacar los moves que hicieron coalesce
+Compara una instrucción cualquier con un MOVE. En cualquier otro caso dará falso*)
+  fun equalInstr(OPER _,_) = false
+	 | equalInstr(LABEL _,_) = false
+	 | equalInstr(MOVE{assem=a1,dst=d1,src=s1},MOVE{assem=a2,dst=d2,src=s2}) = a1 = a2 andalso d1 = d2 andalso s1=s2
+
   fun format saytemp =
     let 
     fun speak(assem,dst,src,jump) =
