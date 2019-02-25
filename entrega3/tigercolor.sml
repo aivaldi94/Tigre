@@ -362,6 +362,9 @@ struct
 							val _ = invFreeze()
 						    (*val _ = print ("\nANTES DE selectSpill:\n")*)
 						    val _ = (print("New temps:\n");printSet(!newTemps))
+						    (*Heurística para seleccionar spills: 
+								- se evitan los temporales generados por spills previos
+								- tienen prioridad los temporales que guardan registros callesaved*)
 							val m = hd(listItems (difference(!spillWorkSet,!newTemps)))
 							val mSet = add(emptyStr,m)							
 							val _ = spillWorkSet := difference (!spillWorkSet,mSet)
@@ -507,12 +510,25 @@ struct
 	fun rewriteProgram(linstr : instr list, f : frame, ltemp : tigertemp.temp list) = case length(!spilledNodes) of
 												0 => (linstr,ltemp)(*(print("Programa reescrito\n");printInstrList linstr;(linstr,ltemp))*)
 												| _ => 	let 
-															(*val _ = print "reescribiendo\n"*)
+															(*Elijo el nodo que hará spill*)
 															val n = hd(!spilledNodes) 
 															val _ = spilledNodes := tl(!spilledNodes)
+															(*Busco un lugar en la memoria para él *)
 															val InFrame k = allocLocal f true
+															(*Modifico todas las instrucciones que lo involucran*)
 															val (instructions, temps) = forEachSpilled(linstr,n,k)
 														in rewriteProgram(instructions,f,ltemp@temps) end		
+														
+	fun deleteCoalescedMoves(linstr: instr list) = let
+														fun f(n,instrs) = let
+																			val move = buscoEnTabla(n,!natToInstr)
+																			fun g i = if tigerassem.equalInstr(i,move) then NONE else (SOME i)
+																			val maybeList = map g instrs
+																			fun filterNone m = m <> NONE
+																			fun maybeToA NONE = raise Fail ("Error deleteCoalescedMoves")
+																				| maybeToA (SOME a) = a
+																		in map maybeToA (List.filter filterNone maybeList) end 
+														in foldl f linstr (!coalescedMoves) end
 	fun makeWorkList (ini) = let
 								val iniList = listItems ini
 								
@@ -608,7 +624,7 @@ struct
 			(*
 			val _ = (print("Lista que es argumento de colorear' desde colorear': "); List.app (fn n => print(n^"\n")) (listItems(addList (coloredNodes, temps))))
 			*)
-		in if temps = [] then (pintar,instructions) else colorear'(instructions,f, initial') end	
+		in if temps = [] then (pintar,deleteCoalescedMoves(instructions)) else colorear'(instructions,f, initial') end	
 		
 	fun colorear (l,f,printt) = 
 		let
@@ -641,15 +657,15 @@ struct
 			(* assign colors*)
 			val coloredNodes = assignColors(emptyStr, !selectStack)
 
+			
 			val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))
-			(*val _ = print "reescribiendo2\n"*)
+
 			(* rewrite program*)
-			(*val _ = print("longitud de lista spilledNodes antes de llamar a rwt en colorear: "^Int.toString(length(!spilledNodes))^"\n")*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
 			val _ = newTemps := addList(emptyStr,temps)
 			
 			val _ = (print("Temporales agregados en colorear\n");List.app print temps;print("\n"))
 			 		 				
-		in if temps = [] then (print("No hizo spill\n");(pintar,instructions)) else colorear'(instructions,f, initial') end	 
+		in if temps = [] then (print("No hizo spill\n");(pintar,deleteCoalescedMoves(instructions))) else colorear'(instructions,f, initial') end	 
 end
