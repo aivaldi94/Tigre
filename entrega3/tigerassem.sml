@@ -1,5 +1,5 @@
-structure tigerassem = struct
-
+structure tigerassem :> tigerassem =
+struct
   type reg = string
   type temp = tigertemp.temp
   type label = tigertemp.label
