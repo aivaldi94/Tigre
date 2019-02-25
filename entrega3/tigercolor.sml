@@ -362,6 +362,9 @@ struct
 							val _ = invFreeze()
 						    (*val _ = print ("\nANTES DE selectSpill:\n")*)
 						    val _ = (print("New temps:\n");printSet(!newTemps))
+						    (*Heurística para seleccionar spills: 
+								- se evitan los temporales generados por spills previos
+								- tienen prioridad los temporales que guardan registros callesaved*)
 							val m = hd(listItems (difference(!spillWorkSet,!newTemps)))
 							val mSet = add(emptyStr,m)							
 							val _ = spillWorkSet := difference (!spillWorkSet,mSet)
