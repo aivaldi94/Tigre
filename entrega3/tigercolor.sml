@@ -160,7 +160,7 @@ struct
     
     fun areAdj (t1,t2) = member(buscoEnTabla(t1,!interf),t2)
     
-    fun ok (t,r) = (buscoEnTabla(t,!degree) < K) (*orelse member(!precoloredSet,t)*) orelse areAdj (t,r)
+    fun ok (t,r) = (buscoEnTabla(t,!degree) < K) orelse member(!precoloredSet,t) orelse areAdj (t,r)
         
 	fun conservative nodes = length(List.filter (fn n => (buscoEnTabla(n,!degree) >= K)) (listItems nodes)) < K
 	

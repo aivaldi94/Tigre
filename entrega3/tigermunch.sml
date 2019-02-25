@@ -23,7 +23,9 @@ fun procEntryExit2 (f : tigerframe.frame,body : instr list) =
 						fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
 						val fetchList = map fetch fetchTemps
 						val i = 1024
-						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},OPER {assem="subq $"^its(i)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
+						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},
+						            tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},
+						            OPER {assem="subq $"^its(i)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
 						val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},OPER {assem = "pop %'d0\n",src=[sp],dst=["rbp",sp],jump=NONE},OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
 						val ret = OPER {assem = "ret\n",src=[],dst=[],jump=NONE}
 				   in  if isMain then prol@body@epil(*body@[ret]*) else prol@storeList@body@fetchList@epil end	
