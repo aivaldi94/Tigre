@@ -13,6 +13,9 @@ val r8 : tigertemp.temp
 val r9 : tigertemp.temp
 val K : int
 datatype access = InFrame of int | InReg of tigertemp.label
+val MAX_ARGS : int
+val MAX_ARGS_REG : int
+val MAX_ARGS_STACK : int
 val fpPrev : int
 val offStaticLink : int
 val calleesaves : tigertemp.temp list

@@ -54,6 +54,10 @@ val registers = [rv,"rbx",rcx,rdx,rsi,rdi,fp,sp,r8,r9,"r10","r11","r12","r13","r
 val registersSet = Splayset.addList (Splayset.empty String.compare, registers) 
 val K = length registers
 
+val MAX_ARGS = 15
+val MAX_ARGS_REG = 6
+val MAX_ARGS_STACK = MAX_ARGS - MAX_ARGS_REG
+
 fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
 
 datatype access = InFrame of int | InReg of tigertemp.label
