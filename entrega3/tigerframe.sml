@@ -18,7 +18,8 @@
 structure tigerframe :> tigerframe = struct
 
 open tigertree
-
+open tigerassem
+open tigertemp
 (*type level = int*)
 
 val fp = "rbp"				(* frame pointer *)
@@ -153,10 +154,44 @@ fun procEntryExit1 (f : frame,body) =
 						| natToReg 5 = r9
 						| natToReg _ = raise Fail "No deberia pasar (natToReg)"				
 						
-						fun accToMove ((InReg t),n) = if n<6 then ((*print("inreg <6\n");*)MOVE (TEMP t,TEMP (natToReg n))) else MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
-						  | accToMove ((InFrame k),n) = if n<6 then ((*print("inframe <6  "^its(k)^"\n");*)MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
+						fun accToMove ((InReg t),n) = if n<6 then ((*print("inreg <6\n");*)tigertree.MOVE (TEMP t,TEMP (natToReg n))) else tigertree.MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
+						  | accToMove ((InFrame k),n) = if n<6 then ((*print("inframe <6  "^its(k)^"\n");*)tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
 				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
-				   
-			   
-end
 
+fun procEntryExit2 (f : frame,body : instr list) =  
+                    let
+						val _ = print("En procEntryExit2\n")
+                        val isMain = (name f) = "_tigermain"
+                     in case isMain of 
+                        false => (let fun store r = 
+										let 
+											val newTemp = tigertemp.newtemp()
+											val _ = print(newTemp^" ")
+										in (tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=newTemp,src=r},newTemp) end
+									val (storeList,tempList) = ListPair.unzip (map store calleesaves')
+									val fetchTemps = ListPair.zip (tempList, calleesaves')
+									fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
+									val fetchList = map fetch fetchTemps
+									val _ = print "\n"
+								in storeList@body@fetchList end) 
+						| true => body end
+										   
+fun procEntryExit3 (f: frame,body : instr list) =  
+					let
+                    	(* Calculo la cantidad de espacio del frame*)
+						(*argumentos                (_)
+				    	  MAX_ARGS_PILA outcoming   (9)
+						  static link				(1)
+     					  variables locales         (_)*)
+						val argsByStack = if length(getFormals f) > 6 then (length(getFormals f) - 6) else 0
+						val space = (argsByStack + MAX_ARGS_STACK + 1 + !(#actualLocal f)) * 8
+						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},
+									tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},
+									OPER {assem="subq $"^its(space)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
+						val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},
+									OPER {assem = "pop %'d0\n",src=[sp],dst=["rbp",sp],jump=NONE},
+									OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
+					in prol@body@epil end
+						
+end
+						

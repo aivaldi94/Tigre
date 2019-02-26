@@ -41,7 +41,13 @@ struct
 	fun printList [] = ()
 		| printList (z::zs) = (print(z^" ");printList zs)
 		
-	fun printSet s = printList(listItems s)								
+	fun printSet s = printList(listItems s)		
+	
+	fun updateProlEpil(f,l) = 
+		let
+			val lWhitoutProl = tl(tl(tl l))
+			val lWhitoutProlEpil = rev( tl(tl(tl (rev lWhitoutProl))))
+		in tigerframe.procEntryExit3 (f,lWhitoutProlEpil) end						
 				
 	(**********************************************************************************************************)
 	
@@ -583,10 +589,12 @@ struct
 										
 	fun colorear'(l,f,inicial) = 
 		let 
+			val newList = l (*updateProlEpil(f,l)*)
+			
 			val _ = print("Estoy en colorear'. Funcion "^tigerframe.nameViejo(f)^"\n")
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
-			val _ = if tigerframe.nameViejo(f) = "printboard" then tigerbuild.build(l,1) else tigerbuild.build(l,0)	
+			val _ = tigerbuild.build(newList,0)	
 			val _  = invMoves()	
 			(*val _ = print("Build hecho'\n")	*)
 			
@@ -615,7 +623,7 @@ struct
 			(*val _ = print "reescribiendo\n"*)
 			(* rewrite program*)
 			(*val _ = print("longitud de lista spilledNodes antes de llamar a rwt en colorear': "^Int.toString(length(!spilledNodes))^"\n")*)
-			val (instructions, temps) = rewriteProgram(l,f,[])
+			val (instructions, temps) = rewriteProgram(newList,f,[])
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
 			val _ = newTemps := addList(emptyStr,temps)
 			
@@ -632,7 +640,7 @@ struct
 			(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
-			val _ = if tigerframe.nameViejo(f) = "printboard" then tigerbuild.build(l,1) else tigerbuild.build(l,0)	
+			val _ = tigerbuild.build(l,0)
 			
 			val _ = invDegree()
 			

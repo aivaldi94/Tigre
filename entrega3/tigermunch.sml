@@ -10,33 +10,6 @@ open tigerit
 fun sortArgs xs = if length xs > 6 then (List.take(xs,6)) @ rev(List.drop(xs,6)) else xs
 
 fun its n =  if n<0 then "-" ^ Int.toString(~n) else Int.toString(n) 
-
-fun procEntryExit2 (f : tigerframe.frame,body : instr list) =  
-                    let
-                        val isMain = (tigerframe.name f) = "_tigermain"
-                        fun store r = 
-                            let 
-                                val newTemp = newtemp()
-                            in (tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=newTemp,src=r},newTemp) end
-                        val (storeList,tempList) = ListPair.unzip (map store tigerframe.calleesaves')
-                        val fetchTemps = ListPair.zip (tempList, tigerframe.calleesaves')
-                        fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
-                        val fetchList = map fetch fetchTemps
-                        (* Calculo la cantidad de espacio del frame*)
-                        (*argumentos                (_)
-                          MAX_ARGS_PILA outcoming   (9)
-                          static link				(1)
-                          variables locales         (_)*)
-                        val argsByStack = if length(tigerframe.getFormals f) > 6 then (length(tigerframe.getFormals f) - 6) else 0
-                        val space = (argsByStack + tigerframe.MAX_ARGS_STACK + 1 + length(tigerframe.getLocals f)) * 8
-                        val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},
-                                    tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},
-                                    OPER {assem="subq $"^its(space)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
-                        val epil = [tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rsp",src="rbp"},
-                                    OPER {assem = "pop %'d0\n",src=[sp],dst=["rbp",sp],jump=NONE},
-                                    OPER {assem = "ret\n",src=[],dst=[],jump=NONE}]
-                        val ret = OPER {assem = "ret\n",src=[],dst=[],jump=NONE}
-                   in  if isMain then prol@body@epil else prol@storeList@body@fetchList@epil end    
                    
 fun codeGen (frame: tigerframe.frame) (stm:tigertree.stm) : tigerassem.instr list =
 let
