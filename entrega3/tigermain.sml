@@ -99,7 +99,7 @@ fun main(args) =
 		(* opcion de debug -precolored / imprime el codigo assembler resultante luego de hacer el munch *)
 		
 		val _ = if precolored then (let
-									val _ = printLabels c
+									(*val _ = printLabels c*)
 									val l11 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
 									val l12 = List.concat (map (fn (f,il) => il) l11)									
 								  in map (fn (i) => print((tigerassem.format id i) ^ "\n")) l12 end) else [()]
@@ -142,7 +142,7 @@ fun main(args) =
 								
 		(* opcion del debug -asm / escribe un archivo llamado prueba.s con el codigo assembler del programa *)
 		val _ = if asm then (let
-							val _ = printLabels c
+							(*val _ = printLabels c*)
 							val outfile = open_out "../tests/TestAssm/prueba.s"
 							val _ = output(outfile, ".section\t.rodata\n\n")
 							val _ = output(outfile, asmStrings c)

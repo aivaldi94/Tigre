@@ -301,5 +301,5 @@ struct
 	val _ = if (pFlag = 1) then (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves))) else ()
 	val _ = if (pFlag = 1) then (print("\nImprimo workSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet)) else ()
 		   
-	in print("\n *********** OK BUILD *********** \n") end	 
+	in ()(*print("\n *********** OK BUILD *********** \n")*) end	 
 end

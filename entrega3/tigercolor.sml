@@ -244,8 +244,8 @@ struct
 							val _ = decrementDegree(difference(adj,!precoloredSet))
 							val cond = (buscoEnTabla(u,!degree) >= K) andalso member(!freezeWorkSet,u)
 							val _ = if cond then (freezeWorkSet := delete (!freezeWorkSet,u);
-												 spillWorkSet := union(!spillWorkSet,uSet);
-												if isSubset(uSet,!newTemps) then print(u^" agregado a spillWorkSet\n") else ()) else ()
+												 spillWorkSet := union(!spillWorkSet,uSet)(*;
+												if isSubset(uSet,!newTemps) then print(u^" agregado a spillWorkSet\n") else ()*)) else ()
 							val _ = (invDegree();invSpill())
 						in () end 	
 												  
@@ -367,7 +367,7 @@ struct
 							val _ = invSimplify()
 							val _ = invFreeze()
 						    (*val _ = print ("\nANTES DE selectSpill:\n")*)
-						    val _ = (print("New temps:\n");printSet(!newTemps))
+						    (*val _ = (print("New temps:\n");printSet(!newTemps))*)
 						    (*Heurística para seleccionar spills: 
 								- se evitan los temporales generados por spills previos
 								- tienen prioridad los temporales que guardan registros callesaved*)
@@ -438,7 +438,7 @@ struct
 											(*val _ = print "\nokColors es\n"
 											val _ = List.app print (listItems okColors)*)
 											val cNodes' = case length (listItems(okColors)) of
-														0 => (let val _ = print ("\nEL NODO SPILL ES "^n^"\n")
+														0 => (let (*val _ = print ("\nEL NODO SPILL ES "^n^"\n")*)
 																val _ = spilledNodes := n::(!spilledNodes)
 															 in cNodes end)
 														| _ => (let 
@@ -555,10 +555,11 @@ struct
 								(*val _ = if equal(emptyStr,lainter) then print ("la interseccion es vacia\n") else raise Fail "Error makeWorkList"
 								val _ = if equal(ini,launion) then print ("la union es initial\n") else raise Fail "Error makeWorkList"*)
 								val _ = initial := emptyStr
-								
+								(*
 								val _ = (print("spillWorkSet: ");printSet(!spillWorkSet))
 								val _ = (print("\nfreezeWorkSet: ");printSet(!freezeWorkSet))
 								val _ = (print("\nssimplifyWorkSet: ");printSet(!simplifyWorkSet))
+								*)
 							 in () end									
 	
 	fun initializeMoves() = let 	
@@ -589,12 +590,14 @@ struct
 										
 	fun colorear'(l,f,inicial) = 
 		let 
-			val newList = l (*updateProlEpil(f,l)*)
+
+			val newList = updateProlEpil(f,l)
 			
-			val _ = print("Estoy en colorear'. Funcion "^tigerframe.nameViejo(f)^"\n")
+			(*val _ = print("Estoy en colorear'. Funcion "^tigerframe.nameViejo(f)^"\n")*)
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
 			val _ = tigerbuild.build(newList,0)	
+
 			val _  = invMoves()	
 			(*val _ = print("Build hecho'\n")	*)
 			
@@ -613,13 +616,13 @@ struct
 			
 			(* imprimo la nueva tabla de interferencia*)
 			(*val _ = (print ("\nImprimo la nueva interfNoPrec\n");tigertab.tabPrintTempTempSet(!interfNoPrec))*)
-			val _ = (print("\nSelectStack: "^Int.toString(length(!selectStack))^"\n");printList(!selectStack))
+			(*val _ = (print("\nSelectStack: "^Int.toString(length(!selectStack))^"\n");printList(!selectStack))*)
 
 			
 			(* assign colors*)
 			val coloredNodes = assignColors(emptyStr, !selectStack)
 
-			val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))
+			(*val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))*)
 			(*val _ = print "reescribiendo\n"*)
 			(* rewrite program*)
 			(*val _ = print("longitud de lista spilledNodes antes de llamar a rwt en colorear': "^Int.toString(length(!spilledNodes))^"\n")*)
@@ -627,7 +630,7 @@ struct
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
 			val _ = newTemps := addList(emptyStr,temps)
 			
-			val _ = (print("Temporales agregados en colorear' \n");List.app print temps;print("\n"))
+			(*val _ = (print("Temporales agregados en colorear' \n");List.app print temps;print("\n"))*)
 			
 			(*
 			val _ = (print("Lista que es argumento de colorear' desde colorear': "); List.app (fn n => print(n^"\n")) (listItems(addList (coloredNodes, temps))))
@@ -636,11 +639,15 @@ struct
 		
 	fun colorear (l,f,printt) = 
 		let
-			val _ = print("Estoy en colorear. Funcion "^tigerframe.nameViejo(f)^"\n")
+			(*val _ = print("Estoy en colorear. Funcion "^tigerframe.nameViejo(f)^"\n")*)
 			(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
+<<<<<<< HEAD
 			val _ = tigerbuild.build(l,0)
+=======
+			val _ = (*if tigerframe.nameViejo(f) = "printboard" then tigerbuild.build(l,1) else *)tigerbuild.build(l,0)	
+>>>>>>> 536984e2a48a697c84e2ebf20390ced1fd986ecb
 			
 			val _ = invDegree()
 			
@@ -660,20 +667,20 @@ struct
 			
 			(* imprimo la nueva tabla de interferencia*)
 			(*al _ = (print ("\nImprimo la nueva interfNoPrec\n");tigertab.tabPrintTempTempSet(!interfNoPrec))*)
-			val _ = (print("\nSelectStack: "^Int.toString(length(!selectStack))^"\n");printList(!selectStack))
+			(*val _ = (print("\nSelectStack: "^Int.toString(length(!selectStack))^"\n");printList(!selectStack))*)
 			
 			(* assign colors*)
 			val coloredNodes = assignColors(emptyStr, !selectStack)
 
 			
-			val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))
+			(*val _ = (print ("Coalesced: Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))*)
 
 			(* rewrite program*)
 			val (instructions, temps) = rewriteProgram(l,f,[])
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
 			val _ = newTemps := addList(emptyStr,temps)
 			
-			val _ = (print("Temporales agregados en colorear\n");List.app print temps;print("\n"))
+			(*val _ = (print("Temporales agregados en colorear\n");List.app print temps;print("\n"))*)
 			 		 				
-		in if temps = [] then (print("No hizo spill\n");(pintar,deleteCoalescedMoves(instructions))) else colorear'(instructions,f, initial') end	 
+		in if temps = [] then ((*print("No hizo spill\n");*)(pintar,deleteCoalescedMoves(instructions))) else colorear'(instructions,f, initial') end	 
 end
