@@ -643,12 +643,8 @@ struct
 			(* OJOO: HAY QUE VACIAR TODAS LAS LISTAS Y CONJUNTOS CADA VEZ QUE EMPIEZO EL ALGORITMO*)
 			val _ = (initializeMoves();initializeNodes();initializeTables())
 			
-<<<<<<< HEAD
 			val _ = tigerbuild.build(l,0)
-=======
-			val _ = (*if tigerframe.nameViejo(f) = "printboard" then tigerbuild.build(l,1) else *)tigerbuild.build(l,0)	
->>>>>>> 536984e2a48a697c84e2ebf20390ced1fd986ecb
-			
+	
 			val _ = invDegree()
 			
 			(*makeWorkList()*)
