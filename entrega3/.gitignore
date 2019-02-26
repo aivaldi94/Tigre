@@ -3,4 +3,7 @@
 *.ui
 tiger
 *.txt
+*.s
+*.o
+*.out
 Makefile
