@@ -24,34 +24,39 @@ type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
 val getTemps : tigerassem.instr list * tigertemp.temp Splayset.set -> tigertemp.temp Splayset.set
 
 *)
-
-val K : int
+(* funcion identidad para temporales *)
 val id : tigertemp.temp -> tigertemp.temp
-(* tigertab.Tabla que asocia enteros (nodos) con instrucciones *)
+
+(* tabla que asocia enteros (nodos) con instrucciones *)
 val natToInstr : (int, tigerassem.instr) tigertab.Tabla ref
-(* tigertab.Tabla que asocia cada nodo con los tigertemp.temporales que se definen en el *)
+
+(* tabla que asocia cada nodo con los tigertemp.temporales que se definen en el *)
 val defs: (int, tigertemp.temp Splayset.set) tigertab.Tabla ref 
-(* tigertab.Tabla que asocia cada nodo con los tigertemp.temporales que se usan en el *)
+
+(* tabla que asocia cada nodo con los tigertemp.temporales que se usan en el *)
 val uses: (int, tigertemp.temp Splayset.set) tigertab.Tabla ref 
-(* tigertab.Tabla que asocia nodos con sus sucesores *)
+
+(* tabla que asocia nodos con sus sucesores *)
 val succs: (int,int Splayset.set) tigertab.Tabla ref
-(* tigertab.Tabla que asocia nodos con tigertemp.temporales liveOut *)
+
+(* tabla que asocia nodos con tigertemp.temporales liveOut *)
 val liveOut : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
-(* tigertab.Tabla que asocia nodos con tigertemp.temporales liveIn *)
+
+(* tabla que asocia nodos con tigertemp.temporales liveIn *)
 val liveIn : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
-(* conjunto de temps relacionados con moves *)
-val moveRelated : tigertemp.temp Splayset.set ref
 
-(* contiene los n° de instrucciones que son move. al principio se carga igualq ue workSetMoves pero luego nunca se modifica*)
-
-val allMoves : int Splayset.set ref
-val workSetMoves: int Splayset.set ref
-
-val moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref
 (* tabla de interferencias *)
 val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
+
 (* tabla de interferencias donde no estan los nodos precoloreados como claves *)
 val interfNoPrec : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
+
+(* conjunto de temps relacionados con moves *)
+val moveRelated : tigertemp.temp Splayset.set ref
+val workSetMoves: int Splayset.set ref
+val moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref
+val allMoves : int Splayset.set ref
+
 (*dado un temporal, devuelve true si pertenece al conjunto de moveRelated*)
 val isMoveRelated : tigertemp.temp -> bool
 

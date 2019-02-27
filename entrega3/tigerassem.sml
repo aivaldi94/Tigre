@@ -27,14 +27,14 @@ Compara una instrucción cualquier con un MOVE. En cualquier otro caso dará fal
                     val saylab = name    
                     fun f (#"'":: #"s":: i::rest) = 
                           (explode(saytemp(List.nth(src,ord i - ord #"0"))) @ f rest)
-                    | f ( #"'":: #"d":: i:: rest) = 
-                        (explode(saytemp(List.nth(dst,ord i - ord #"0"))) @ f rest)
-                    | f ( #"'":: #"j":: i:: rest) = 
-                        (explode((*saylab*)(List.nth(jump,ord i - ord #"0"))) @ f rest)
-                    | f ( #"'":: #"'":: rest) = #"'" :: f rest
-                    | f ( #"'":: _ :: rest) = raise Fail "bad Assem format"
-                    | f (c :: rest) = (c :: f rest)
-                    | f nil = nil
+                        | f ( #"'":: #"d":: i:: rest) = 
+                            (explode(saytemp(List.nth(dst,ord i - ord #"0"))) @ f rest)
+                        | f ( #"'":: #"j":: i:: rest) = 
+                            (explode((*saylab*)(List.nth(jump,ord i - ord #"0"))) @ f rest)
+                        | f ( #"'":: #"'":: rest) = #"'" :: f rest
+                        | f ( #"'":: _ :: rest) = raise Fail "bad Assem format"
+                        | f (c :: rest) = (c :: f rest)
+                        | f nil = nil
                 in implode(f(explode assem))
                 end
         in fn OPER{assem,dst,src,jump=NONE} => speak(assem,dst,src,nil)

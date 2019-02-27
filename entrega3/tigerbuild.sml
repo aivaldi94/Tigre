@@ -1,4 +1,3 @@
-
 structure tigerbuild :> tigerbuild =
 struct
 	open tigerassem
@@ -7,7 +6,6 @@ struct
 	open Splayset
 	open tigerframe
 	
-	fun name x = x
 	fun id x = x
 	type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
 
