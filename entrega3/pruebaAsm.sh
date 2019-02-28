@@ -14,7 +14,7 @@ for i in "${noEntry[@]}"
 			./tiger ../tests/good/test$i.tig -asm 2>&1 >/dev/null;			
 			echo "**********************************************" >> resultado.txt;
 			echo "TEST "$i >> resultado.txt;			
-			gcc -s ../tests/TestAssm/prueba.s ../tests/TestAssm/runtime.o;					
+			gcc -s -no-pie ../tests/TestAssm/prueba.s ../tests/TestAssm/runtime.o;					
 			./a.out &>> resultado.txt; 
 			if [ "$?" -eq 139 ];
 			then echo "segfault" &>> resultado.txt;

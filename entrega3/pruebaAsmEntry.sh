@@ -12,7 +12,7 @@ for i in "${withEntry[@]}"
 			./tiger ../tests/good/test$i.tig -asm 2>&1 >/dev/null;			
 			echo "**********************************************";
 			echo "TEST "$i;			
-			gcc -s ../tests/TestAssm/prueba.s ../tests/TestAssm/runtime.o;					
+			gcc -s -no-pie ../tests/TestAssm/prueba.s ../tests/TestAssm/runtime.o;					
 			./a.out;
 	done
 
