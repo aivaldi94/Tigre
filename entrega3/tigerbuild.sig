@@ -1,63 +1,53 @@
 signature tigerbuild =
 sig
-
-(*
-
-val fillNatToInstr : tigerassem.instr list * int -> (int, tigerassem.instr) tigertab.Tabla
-
-val fillDefs : tigerassem.instr -> tigertemp.temp Splayset.set
-
-val fillUses : tigerassem.instr -> tigertemp.temp Splayset.set
-
-(* findLabel retorna los nodos del natToInstr que tienen como etiqueta a l *)
-
-val findLabel : tigertemp.label -> int list
-
-(*instrList lista de instrucciones de natToInstr*)
-
-val instrList  : tigerassem.instr list ref
-
-val fillSuccs : tigerassem.instr list * int -> (int, int Splayset.set) tigertab.Tabla
-
-type interfTab = (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla
-
-val getTemps : tigerassem.instr list * tigertemp.temp Splayset.set -> tigertemp.temp Splayset.set
-
-*)
-
-val K : int
+    
+(* funcion identidad para temporales *)
 val id : tigertemp.temp -> tigertemp.temp
-(* tigertab.Tabla que asocia enteros (nodos) con instrucciones *)
+
+(* tabla que asocia enteros (instrucciones) con instrucciones *)
 val natToInstr : (int, tigerassem.instr) tigertab.Tabla ref
-(* tigertab.Tabla que asocia cada nodo con los tigertemp.temporales que se definen en el *)
+
+(* tabla que asocia cada instruccion con los tigertemp.temporales que se definen en el *)
 val defs: (int, tigertemp.temp Splayset.set) tigertab.Tabla ref 
-(* tigertab.Tabla que asocia cada nodo con los tigertemp.temporales que se usan en el *)
+
+(* tabla que asocia cada instruccion con los tigertemp.temporales que se usan en el *)
 val uses: (int, tigertemp.temp Splayset.set) tigertab.Tabla ref 
-(* tigertab.Tabla que asocia nodos con sus sucesores *)
+
+(* tabla que asocia instruccion con sus sucesores *)
 val succs: (int,int Splayset.set) tigertab.Tabla ref
-(* tigertab.Tabla que asocia nodos con tigertemp.temporales liveOut *)
+
+(* tabla que asocia instruccion con tigertemp.temporales liveOut *)
 val liveOut : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
-(* tigertab.Tabla que asocia nodos con tigertemp.temporales liveIn *)
+
+(* tabla que asocia instruccion con tigertemp.temporales liveIn *)
 val liveIn : (int, tigertemp.temp Splayset.set) tigertab.Tabla ref
+
+(* tabla de interferencias *)
+val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
+
+(* tabla de interferencias donde no estan los nodos precoloreados como claves *)
+val interfNoPrec : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
+
 (* conjunto de temps relacionados con moves *)
 val moveRelated : tigertemp.temp Splayset.set ref
 
-(* contiene los n° de instrucciones que son move. al principio se carga igualq ue workSetMoves pero luego nunca se modifica*)
-
-val allMoves : int Splayset.set ref
+(* contiene los numeros de instruccion que son moves - no agrega aquellas instrucciones
+   que son moves entre precoloreados *)
 val workSetMoves: int Splayset.set ref
 
+(* tabla que asocia a cada temporal con el conjunto de instrucciones moves en donde aparece *)
 val moveSet: (tigertemp.temp, int Splayset.set) tigertab.Tabla ref
-(* tabla de interferencias *)
-val interf : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
-(* tabla de interferencias donde no estan los nodos precoloreados como claves *)
-val interfNoPrec : (tigertemp.temp, tigertemp.temp Splayset.set) tigertab.Tabla ref
-(*dado un temporal, devuelve true si pertenece al conjunto de moveRelated*)
-val isMoveRelated : tigertemp.temp -> bool
+
+(* es equivalente a workSetMoves pero no se modificara durante la ejecucion del algortimo *)
+val allMoves : int Splayset.set ref
 
 (* Lista y conjuntos de precoloreados*)
 val precoloredList : string list ref
 val precoloredSet : string Splayset.set ref
+
+(*dado un temporal, devuelve true si pertenece al conjunto de moveRelated*)
+val isMoveRelated : tigertemp.temp -> bool
+
 (*funcion unificadora. construye "grafo" de flujo y "grafo" de interferencia *)
 val build : (tigerassem.instr list * int) -> unit
 
