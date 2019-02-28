@@ -1,5 +1,8 @@
 *.uo
 *.ui
-*/tiger
+tiger
 *.txt
-*/Makefile
+*.s
+*.o
+*.out
+Makefile
