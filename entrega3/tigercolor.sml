@@ -628,7 +628,7 @@ struct
 			(*val _ = print("longitud de lista spilledNodes antes de llamar a rwt en colorear': "^Int.toString(length(!spilledNodes))^"\n")*)
 			val (instructions, temps) = rewriteProgram(newList,f,[])
 			val initial' = addList (union(coloredNodes,!coalescedNodes), temps)
-			val _ = newTemps := addList(emptyStr,temps)
+			val _ = newTemps := addList(!newTemps,temps)
 			
 			(*val _ = (print("Temporales agregados en colorear' \n");List.app print temps;print("\n"))*)
 			
