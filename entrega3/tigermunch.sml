@@ -27,6 +27,13 @@ let
         | natToReg 5 = tigerframe.r9
         | natToReg _ = raise Fail "No deberia pasar (natToReg)"
 
+	(*Esta función agrega la instrcción movq $0,%rax en caso de que se esté llamando a una funcion del runtime con argumentos variables *)
+	(* La única que hay es _allocRecord*)	
+	fun prepareCall name = 
+		case name of
+			"_allocRecord" =>  emit (OPER {assem="movq $0, %'d0\n",src=[],dst=["rax"],jump=NONE})
+			| _ => ()
+			
     fun munchStm s = 
         case s of
             SEQ(a,b)                            => (munchStm a; munchStm b)
@@ -44,7 +51,7 @@ let
                                                         emit (OPER {assem="movq %'s0, (%'s1)\n",src=[t,munchExp e1],dst=[],jump=NONE}))
                                                    end
                                                    
-            | MOVE (TEMP t, CALL(NAME e,args))  => (munchArgs (0,sortArgs args); emit (OPER {assem="call "^e^"\n",src=[sp],dst=callersaves,jump=NONE}); 
+            | MOVE (TEMP t, CALL(NAME e,args))  => (munchArgs (0,sortArgs args);prepareCall e ; emit (OPER {assem="call "^e^"\n",src=[sp],dst=callersaves,jump=NONE}); 
                                                                         emit (tigerassem.MOVE {assem="movq %'s0, %'d0\n",src=rv,dst=t}))            
                                                                                        
             | MOVE (MEM(e1),e2)                 => emit (OPER {assem="movq %'s0, (%'s1)\n",src=[munchExp e2,munchExp e1],dst=[],jump=NONE})
@@ -114,7 +121,7 @@ let
                                                        emit (OPER {assem=res^" "^l1^"\n",src=[],dst=[],jump=SOME [l1,l2]}))
                                                    end
             | LABEL lab                         => emit (tigerassem.LABEL {assem=lab^":\n",lab=lab})
-            | EXP (CALL (NAME n,args))          => (munchArgs(0,sortArgs args);(emit (OPER {assem="call "^n^"\n",src=[sp],dst=callersaves,jump=NONE})))
+            | EXP (CALL (NAME n,args))          => (munchArgs(0,sortArgs args);prepareCall n ;emit (OPER {assem="call "^n^"\n",src=[sp],dst=callersaves,jump=NONE}))
             | EXP (CALL (e,args))               => raise Fail "No deberia pasar (call)\n"
             | EXP e 							=> emit (tigerassem.MOVE {assem = "movl `s0 `d0",src = munchExp e,dst = tigertemp.newtemp()})
 			(*| JUMP (e, ls) 						=> emit (OPER {assem = "jmp `s0",src = [munchExp e],dst = [],jump = SOME ls})*)

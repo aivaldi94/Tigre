@@ -160,7 +160,6 @@ fun procEntryExit1 (f : frame,body) =
 
 fun procEntryExit2 (f : frame,body : instr list) =  
                     let
-						val _ = print("En procEntryExit2\n")
                         val isMain = (name f) = "_tigermain"
                      in case isMain of 
                         false => (let fun store r = 
