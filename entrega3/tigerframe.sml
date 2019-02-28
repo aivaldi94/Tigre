@@ -175,7 +175,14 @@ fun procEntryExit2 (f : frame,body : instr list) =
 									val _ = print "\n"
 								in storeList@body@fetchList end) 
 						| true => body end
-										   
+	
+fun pow2 0 = 1
+	| pow2 n = 2*(pow2 (n-1))
+
+fun pot2 n i = let val m = pow2 i
+				in if n <= m then m else pot2 n (i+1) end
+				
+														   
 fun procEntryExit3 (f: frame,body : instr list) =  
 					let
                     	(* Calculo la cantidad de espacio del frame*)
@@ -184,7 +191,7 @@ fun procEntryExit3 (f: frame,body : instr list) =
 						  static link				(1)
      					  variables locales         (_)*)
 						val argsByStack = if length(getFormals f) > 6 then (length(getFormals f) - 6) else 0
-						val space = (argsByStack + MAX_ARGS_STACK + 1 + !(#actualLocal f)) * 8
+						val space = ((argsByStack + MAX_ARGS_STACK + 1 + !(#actualLocal f)) * 8)
 						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},
 									tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst="rbp",src="rsp"},
 									OPER {assem="subq $"^its(space)^", %'d0\n",src=["rsp"],dst=["rsp"],jump=NONE}]
