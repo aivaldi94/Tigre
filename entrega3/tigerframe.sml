@@ -178,8 +178,7 @@ fun pow2 0 = 1
 
 fun pot2 n i = let val m = pow2 i
 				in if n <= m then m else pot2 n (i+1) end
-				
-														   
+				                              
 fun procEntryExit3 (f: frame,body : instr list) =  
   let
     val argsByStack = if length(getFormals f) > 6 then (length(getFormals f) - 6) else 0
