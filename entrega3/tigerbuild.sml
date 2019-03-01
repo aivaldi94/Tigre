@@ -49,7 +49,7 @@ struct
         val longNatToInstr = List.length(instrList) 
         val lastInstrNumber = longNatToInstr - 1
         
-        val _ = if (pFlag = 1) then (("\n\nImprimo natToInstr\n");tigertab.tabPrintIntInstr(!natToInstr))
+        val _ = if (pFlag = 1) then (("\n\nnatToInstr\n");tigertab.tabPrintIntInstr(!natToInstr))
                                else ()
         
     (* ---------------------------------------------------------------------------------------------------------- *)
@@ -61,7 +61,7 @@ struct
                                 
         val _ = defs := (tabAAplica (id,fillDefs,!natToInstr))
         
-        val _ = if (pFlag = 1) then (print ("\nImprimo defs\n");tigertab.tabPrintIntTempSet(!defs))
+        val _ = if (pFlag = 1) then (print ("\ndefs\n");tigertab.tabPrintIntTempSet(!defs))
                                else ()
 
     (* ---------------------------------------------------------------------------------------------------------- *)
@@ -72,7 +72,7 @@ struct
                             | MOVE {assem=_,dst=_,src=s} => singleton String.compare s
                                 
         val _ = uses := (tabAAplica (id,fillUses,!natToInstr))
-        val _ = if (pFlag = 1) then (print ("\nImprimo uses\n");tigertab.tabPrintIntTempSet(!uses))
+        val _ = if (pFlag = 1) then (print ("\nuses\n");tigertab.tabPrintIntTempSet(!uses))
                                else ()
         
     (* ---------------------------------------------------------------------------------------------------------- *)
@@ -90,13 +90,13 @@ struct
                         OPER {assem=a,dst=d,src=s,jump=j} =>
                             (case j of
                                 NONE => tabInserta(n,addList (empty,[n+1]),fillSuccs(xs,n+1))
-                                | SOME l => tabInserta (n,addList(empty,List.concat ((List.map findLabel l) : int list list)), fillSuccs(xs,n+1)))
+                                | SOME l => tabInserta (n,addList(empty,List.concat (List.map findLabel l)), fillSuccs(xs,n+1)))
                         | LABEL {assem=a,lab=l} => tabInserta(n,addList(empty,[n+1]),fillSuccs(xs,n+1)) 
                         | MOVE {assem=a,dst=d,src=s} => tabInserta(n,addList(empty,[n+1]),fillSuccs(xs,n+1))    
                 end
              
         val _ = succs := fillSuccs (instrList ,0)
-        val _ = if (pFlag = 1) then (print ("\nImprimo succs\n"); tigertab.tabPrintIntIntSet(!succs))
+        val _ = if (pFlag = 1) then (print ("\nsuccs\n"); tigertab.tabPrintIntIntSet(!succs))
                                else ()
                     
     (* ---------------------------------------------------------------------------------------------------------- *)            
@@ -155,9 +155,9 @@ struct
         
         val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(tabNueva(),tabNueva(),tabNueva(),tabNueva()))
         
-        val _ = if (pFlag = 1) then (print ("\nImprimo liveIn\n");tigertab.tabPrintIntTempSet(!liveIn))
+        val _ = if (pFlag = 1) then (print ("\nliveIn\n");tigertab.tabPrintIntTempSet(!liveIn))
                                else ()     
-        val _ = if (pFlag = 1) then (print ("\nImprimo liveOut\n");tigertab.tabPrintIntTempSet(!liveOut))
+        val _ = if (pFlag = 1) then (print ("\nliveOut\n");tigertab.tabPrintIntTempSet(!liveOut))
                                else ()
             
     (* ---------------------------------------------------------------------------------------------------------- *)            
@@ -233,9 +233,9 @@ struct
                                                 let
                                                     val dSet = Splayset.addList(empty, [s,d])
                                                     val liveouts' = difference (liveouts,dSet)                                                  
-                                                    fun f' ((tmp, t) : (temp * interfTab)) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t)) 
+                                                    fun f' (tmp, t) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t)) 
                                                     val tab' = f'(d,tab)        
-                                                    val g = (fn (tmp,t) => tabRInserta (tmp,Splayset.add(findSet(tmp,tab'),d),t)) : (temp * interfTab) -> interfTab
+                                                    val g = fn (tmp,t) => tabRInserta (tmp,Splayset.add(findSet(tmp,tab'),d),t)
                                                     val liveoutsList = Splayset.listItems liveouts'             
                                                     val tab'' = List.foldl g tab' liveoutsList                                              
                                                 in fillInterf(n-1,tab'') end
@@ -243,7 +243,7 @@ struct
 
         val _ = interf := fillInterf(lastInstrNumber,tabNueva())
         
-        val _ = if (pFlag = 1) then (print ("\nImprimo interf\n");tigertab.tabPrintTempTempSet(!interf))
+        val _ = if (pFlag = 1) then (print ("\ninterf\n");tigertab.tabPrintTempTempSet(!interf))
                                else ()
         
         val _ = interfNoPrec := tabInserList(tabNueva(),List.filter (fn (t,_) => not(member(!precoloredSet,t))) (tabAList(!interf)))
@@ -270,9 +270,9 @@ struct
     val _ = workSetMoves := workSetMoves'
     val _ = moveSet := moveSet'
     val _ = allMoves := !workSetMoves
-    val _ = if (pFlag = 1) then (print ("\nImprimo workSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves)))
+    val _ = if (pFlag = 1) then (print ("\nworkSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves)))
                            else ()
-    val _ = if (pFlag = 1) then (print("\nImprimo workSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet))
+    val _ = if (pFlag = 1) then (print("\nworkSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet))
                            else ()
            
     in () end    

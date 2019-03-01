@@ -20,7 +20,6 @@ structure tigerframe :> tigerframe = struct
 open tigertree
 open tigerassem
 open tigertemp
-(*type level = int*)
 
 val fp = "rbp"				(* frame pointer *)
 val sp = "rsp"				(* stack pointer *)
@@ -67,12 +66,13 @@ type frame = {
 	name: string,
 	nameViejo: string,
 	formals: bool list,
-	arguments: access list ref, (*Esto es una bolasa nuestra*)
+	arguments: access list ref, 
 	locals: bool list,
 	actualArg: int ref,
 	actualLocal: int ref,
 	actualReg: int ref
 }
+
 type register = string
 
 datatype frag = PROC of {body: tigertree.stm, frame: frame}
@@ -88,13 +88,15 @@ fun newFrame{name, nameViejo,formals} = {
 	actualLocal=ref localsInicial, (*Cantidad de variables locales guardadas en la pila*)
 	actualReg=ref regInicial
 }
+
 fun name (f: frame) = #name f
+
 fun nameViejo (f: frame) = #nameViejo f
-(* Representación de Tiger de un string
-   "3dia\n"*)
+
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
 
 fun getFormals(f: frame) = #formals f
+
 fun getLocals(f: frame) = #locals f
 
 (* El InFrame que se agrega al inicio corresponde al static link*)
@@ -106,29 +108,24 @@ fun allocArg (f: frame) b =
 	let val acc = 
 		(case b of
 		true =>
-			let	(*val _ = print("allocARg InFrame \n")*)
+			let	
 				val ret = (argsOffInicial-(!(#actualArg f)*wSz))
 				val _ = #actualArg f := !(#actualArg f)+1
 			in	InFrame ret end
-		| false => ((*print("allorArg InReg \n");*)InReg(tigertemp.newtemp())))
+		| false => (InReg(tigertemp.newtemp())))
 	in (#arguments f := !(#arguments f) @ [acc];acc) end
-	(* malloc *)
 
 fun allocLocal (f: frame) b = 
 	case b of
 	true =>
-		let	val ret = InFrame ((~(!(#actualLocal f))-(!(#actualArg f)))*localsGap+argsOffInicial) (* REVISAR MULTIPLICAR *)
-			(*val _ = print "allocLocal true"*)
+		let	val ret = InFrame ((~(!(#actualLocal f))-(!(#actualArg f)))*localsGap+argsOffInicial) 
 		in	#actualLocal f:=(!(#actualLocal f)+1); ret end
 	| false => InReg(tigertemp.newtemp())
 
-(* Habría que verificar que esto ande correctamente *)
-(* Para acceder a variables. ¿Siempre que accedo a variable serán hijas? *)	
 fun getFrame 0 = TEMP(fp)
 	| getFrame n = MEM(BINOP(PLUS, (getFrame (n-1)), CONST offStaticLink))
 
 fun exp (InFrame k) e = MEM(BINOP(PLUS, getFrame e, CONST k))
-(*  | exp (InReg l) e = (print("Entro en temp "^l^"\n\n");TEMP l) *)
 	| exp (InReg l) e = (TEMP l)	
 
 
@@ -154,24 +151,27 @@ fun procEntryExit1 (f : frame,body) =
 						| natToReg 5 = r9
 						| natToReg _ = raise Fail "No deberia pasar (natToReg)"				
 						
-						fun accToMove ((InReg t),n) = if n<6 then ((*print("inreg <6\n");*)tigertree.MOVE (TEMP t,TEMP (natToReg n))) else tigertree.MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap)))) (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
-						  | accToMove ((InFrame k),n) = if n<6 then ((*print("inframe <6  "^its(k)^"\n");*)tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n))) else tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
+						fun accToMove ((InReg t),n) = if n<6 then (tigertree.MOVE (TEMP t,TEMP (natToReg n)))
+                                                 else tigertree.MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))
+                                                 (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
+						  | accToMove ((InFrame k),n) = if n<6 then (tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n)))
+                                                   else tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                         						
 				   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
 
 fun procEntryExit2 (f : frame,body : instr list) =  
                     let
-                        val isMain = (name f) = "_tigermain"
-                     in case isMain of 
+                      val isMain = (name f) = "_tigermain"
+                    in case isMain of 
                         false => (let fun store r = 
-										let 
-											val newTemp = tigertemp.newtemp()
-										in (tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=newTemp,src=r},newTemp) end
-									val (storeList,tempList) = ListPair.unzip (map store calleesaves')
-									val fetchTemps = ListPair.zip (tempList, calleesaves')
-									fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
-									val fetchList = map fetch fetchTemps
-								in storeList@body@fetchList end) 
-						| true => body end
+                                              let 
+                                                val newTemp = tigertemp.newtemp()
+                                              in (tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=newTemp,src=r},newTemp) end
+                                      val (storeList,tempList) = ListPair.unzip (map store calleesaves')
+                                      val fetchTemps = ListPair.zip (tempList, calleesaves')
+                                      fun fetch (t,c) = tigerassem.MOVE {assem="movq %'s0, %'d0\n",dst=c,src=t}
+                                      val fetchList = map fetch fetchTemps
+                                  in storeList@body@fetchList end) 
+                        | true => body end
 	
 fun pow2 0 = 1
 	| pow2 n = 2*(pow2 (n-1))
@@ -182,11 +182,6 @@ fun pot2 n i = let val m = pow2 i
 														   
 fun procEntryExit3 (f: frame,body : instr list) =  
 					let
-                    	(* Calculo la cantidad de espacio del frame*)
-						(*argumentos                (_)
-				    	  MAX_ARGS_PILA outcoming   (9)
-						  static link				(1)
-     					  variables locales         (_)*)
 						val argsByStack = if length(getFormals f) > 6 then (length(getFormals f) - 6) else 0
 						val space = ((argsByStack + MAX_ARGS_STACK + 1 + !(#actualLocal f)) * 8)
 						val prol = [OPER {assem = "pushq %'s0\n",src=["rbp",sp],dst=[sp],jump=NONE},

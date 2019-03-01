@@ -117,38 +117,21 @@ fun main(args) =
 								val _ = printLabels c
 								val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)		
 								val l2 = List.concat (map (fn (f,lin) => tigersimpleregalloc.simpleregalloc f lin) l1)
-							   in map (fn (i) => print((tigerassem.format id i) ^ "\n")) l2 end) else [()]
-		
-		(* funcion auxiliar, escribe el codigo COLOREADO como string, usado para escribir el archivo *)
+							   in map (fn (i) => print((tigerassem.format id i) ^ "\n")) l2 end) else [()]				
 		
 		fun asmFunction [] = "\n"
 		    | asmFunction ((body, f):: xs) = let
 							  val nFrame = tigerframe.name f
-							  (*val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n\tpushq %rbp\n\tmovq %rsp, %rbp\n\tsubq $1024, %rsp\n\n"*)
-							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n"
-							  (*val epi = "\n\tmovq %rbp, %rsp\n\tpopq %rbp\n\tret\n"*)
+							  val prol = ".globl "^nFrame^"\n.type "^nFrame^",@function\n"^nFrame^":\n"							  
 							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)
 							  val l2 = tigerframe.procEntryExit2(f,l1)
 							  val l3 = tigerframe.procEntryExit3(f,l2) (* agregar prologo y epilogo *)					  
 							  val (pintar, l4) = tigercolor.colorear(l3,f,0)
-							  val l5 = map (fn i => tigerassem.format pintar i) l4
-								  (*
-							  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
-								 val l2 = List.concat (map (fn (f,il) => il) l1)
-								 val _ = tigerbuild.build (l2,1)
-								  val pintar = tigercolor.colorear()
-								  val l3 = map (fn i => tigerassem.format pintar i) l2
-								  *)
-							  (*
-							  val l1 = List.concat(map (fn s => tigermunch.codeGen f s) body)
-							  val l2 = (tigersimpleregalloc.simpleregalloc f l1) : tigerassem.instr list
-	   					      val l3 = map (fn i => tigerassem.format id i) l2
-							*)
+							  val l5 = map (fn i => tigerassem.format pintar i) l4								
 						     in prol^"\n"^concatInstr l5^"\n"^(asmFunction xs) end
 								
 		(* opcion del debug -asm / escribe un archivo llamado prueba.s con el codigo assembler del programa *)
 		val _ = if asm then (let
-							(*val _ = printLabels c*)
 							val outfile = open_out "../tests/TestAssm/prueba.s"
 							val _ = output(outfile, ".section\t.rodata\n\n")
 							val _ = output(outfile, asmStrings c)
