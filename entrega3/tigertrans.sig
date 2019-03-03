@@ -8,7 +8,7 @@ type access
 type frag = tigerframe.frag
 val outermost : level
 val newLevel : {parent: level, name: tigertemp.label,nameViejo: tigertemp.label,
-				formals: bool list} -> level
+                formals: bool list} -> level
 val formals : level -> access list
 val getActualLev : unit -> int
 val allocArg : level -> bool -> access

@@ -376,7 +376,7 @@ and trvar(SimpleVar s, nl) =
           val form = aux0 (p, n)
           val lab = if nom = "_tigermain" then "_tigermain" else tigertrans.generateUniqueLab()
           val nlevel = tigertrans.newLevel {parent = levNest, name = lab,nameViejo=nom,formals = f}       
-            in insertFuns(rns, fs, tabRInserta (nom, Func {level = nlevel, label = lab, formals = form, result = res, extern = false}, venv))
+            in insertFuns(rns,fs,tabRInserta (nom,Func {level = nlevel,label = lab,formals = form,result = res,extern = false},venv))
             end
                                                            
           val env1 = insertFuns (xs, listEscapes, venv)

@@ -5,7 +5,7 @@ struct
 		     | TEMP of tigertemp.temp
 		     | BINOP of binop*exp*exp
 		     | MEM of exp
-		     | CALL of exp*exp list (* (exp, exp list) *)
+		     | CALL of exp*exp list 
 		     | ESEQ of stm*exp
 	and stm = MOVE of exp*exp
 		| EXP of exp
