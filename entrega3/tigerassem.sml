@@ -19,6 +19,7 @@ Compara una instrucción cualquier con un MOVE. En cualquier otro caso dará fal
   fun equalInstr(OPER _,_) = false
     | equalInstr(LABEL _,_) = false
     | equalInstr(MOVE{assem=a1,dst=d1,src=s1},MOVE{assem=a2,dst=d2,src=s2}) = a1 = a2 andalso d1 = d2 andalso s1=s2
+    | equalInstr (_,_) = raise Fail ("no deberia pasar equalInstr")
 
 fun format saytemp =
   let 

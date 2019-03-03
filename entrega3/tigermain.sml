@@ -25,11 +25,10 @@ fun main(args) =
 		val (flow, l6)		 = arg(l5, "-flow") 
 		val (inter, l7)		 = arg(l6, "-inter") 
 		val (precolored, l8) = arg(l7, "-precolored")
-		val (sregalloc, l9)	 = arg(l8, "-sregalloc") (*simple reg alloc*)
+		val (sregalloc, l9)	 = arg(l8, "-sregalloc") 
 		val (asm, l10)		 = arg(l9, "-asm")
-		val (colored, l11)	 = arg(l10, "-colored")
 		val entrada =
-			case l11 of
+			case l10 of
 			[n] => ((open_in n)
 					handle _ => raise Fail (n^" no existe!"))
 			| [] => std_in
@@ -139,16 +138,7 @@ fun main(args) =
 							val _ = output(outfile, asmFunction b)							
 							val _ = close_out outfile
 						  in () end) else ()
-(*
-		val _ = if colored then (let
-								  val l1 = (List.map apCode b) : ((tigerframe.frame * tigerassem.instr list) list)									
-								  val l2 = List.concat (map (fn (f,il) => il) l1)
-								  val _ = tigerbuild.build (l2,1)
-								  val pintar = tigercolor.colorear()
-								  val l3 = map (fn i => tigerassem.format pintar i) l2
-								  
-								 in () end) else () 
-	*)	
+ 
 		in 
 		print "yes!!\n"
 	end	handle Fail s => print("Fail: "^s^"\n")

@@ -71,6 +71,7 @@ fun tabFiltra(f, t) =
   
 fun tabIgual1 (f,[],ls') = true
   | tabIgual1 (f : ('a * 'a -> bool),(_,l)::ls,(_,l')::ls') = if f (l,l') then tabIgual1(f,ls,ls') else false
+  | tabIgual1 (_,_,_) = raise Fail ("no deberia pasar tabIgual1")
   
 fun tabIgual (f : ('a * 'a -> bool),t,t') = if (numItems t = numItems t') then tabIgual1 (f,tabAList t, tabAList t') else false
   
