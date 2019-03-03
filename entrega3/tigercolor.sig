@@ -48,52 +48,37 @@ val frozenMoves : int Splayset.set ref
 (* conjunto de todos los temporales existentes*)
 val setOfAllTemps : tigertemp.temp Splayset.set ref
 
-(**)
 val newTemps : tigertemp.temp Splayset.set ref
 
-(**)
 val findSetInt : (tigertemp.temp * (tigertemp.temp , int Splayset.set) tigertab.Tabla) -> int Splayset.set
 
-(**)
 val findSetStr : (tigertemp.temp * (tigertemp.temp , tigertemp.temp Splayset.set) tigertab.Tabla) -> tigertemp.temp Splayset.set
 
-(**)
 val printList : tigertemp.temp list -> unit
 
-(* updateProlEpil*)
-
-(**)
 val invNodes : unit -> unit
 
-(**)
 val invMoves : unit -> unit
 
-(**)
 val invDegree : unit -> unit
 
-(**)
 val invSpill : unit -> unit
 
-(**)
 val invSimplify : unit -> unit
 
-(**)
 val invFreeze : unit -> unit
 
-(**)
 val nodeMoves : tigertemp.temp -> int Splayset.set
 
 (* determina si un nodo en especial todavia tiene que ver con un move o no *)
 val moveRelatedFun: tigertemp.temp -> bool
 
-(**)
 val enableMoves: tigertemp.temp Splayset.set -> unit
 
 val adjacent : tigertemp.temp -> tigertemp.temp Splayset.set
 
 val adjacent' : tigertemp.temp -> tigertemp.temp Splayset.set
 
-(**)
 val decrementDegree: tigertemp.temp Splayset.set -> unit
 
 val getAlias: tigertemp.temp -> tigertemp.temp 
@@ -107,8 +92,8 @@ val conservative: tigertemp.temp Splayset.set -> bool
 val addWorkList : tigertemp.temp -> unit
 
 (*  toma un entero que representa una tigerassem.instruccion move y devuelve (src,dst) *)
-	(* funcion auxiliar que toma un entero que es el numero de tigerassem.instruccion y devuelve la tupla (src,dst) de un move *)
-	(* se usa para cuando el libro dice m (copy(x,y))*)
+(* funcion auxiliar que toma un entero que es el numero de tigerassem.instruccion y devuelve la tupla (src,dst) de un move *)
+(* se usa para cuando el libro dice m (copy(x,y))*)
 	
 val tempsInMove: int -> (tigertemp.temp * tigertemp.temp)
 
