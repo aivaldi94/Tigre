@@ -21,28 +21,28 @@ open tigertree
 open tigerassem
 open tigertemp
 
-val fp = "rbp"        (* frame pointer *)
-val sp = "rsp"        (* stack pointer *)
-val rv = "rax"        (* return value  *)
+val fp = "rbp"          (* frame pointer *)
+val sp = "rsp"          (* stack pointer *)
+val rv = "rax"          (* return value  *)
 val rdi ="rdi"
 val rsi = "rsi"
 val rdx = "rdx"
 val rcx = "rcx"
 val r8 = "r8"
 val r9 = "r9"
-val wSz = 8       (* word size in bytes *)
-val log2WSz = 3       (* base two logarithm of word size in bytes *)
-val fpPrev = 0        (* offset (bytes) *)
-val offStaticLink = ~8      (* offset (bytes) *)
-val offArgs = 16 (* cuanto arriba del fp empiezan a estar los argumentos pasados por pila*)
+val wSz = 8             (* word size in bytes *)
+val log2WSz = 3         (* base two logarithm of word size in bytes *)
+val fpPrev = 0          (* offset (bytes) *)
+val offStaticLink = ~8  (* offset (bytes) *)
+val offArgs = 16        (* cuanto arriba del fp estan los argumentos pasados por pila*)
 
-val argsInicial = 0     (* el primer argumento *)
-val argsOffInicial = ~16    (* words *)
-val argsGap = wSz     (* bytes *)
+val argsInicial = 0       (* el primer argumento *)
+val argsOffInicial = ~16  (* words *)
+val argsGap = wSz         (* bytes *)
 
-val regInicial = 1      (* reg *)
-val localsInicial = 0   (* la primera variable local *)
-val localsGap = 8       (* bytes *)
+val regInicial = 1        (* reg *)
+val localsInicial = 0     (* la primera variable local *)
+val localsGap = 8         (* bytes *)
 
 val calldefs = [rv]
 val specialregs = [rv, fp, sp]
@@ -84,7 +84,7 @@ fun newFrame{name, nameViejo,formals} = {
   formals=formals,
   arguments=ref [],
   locals=[],
-  actualArg=ref argsInicial, (*Cantidad de argumentos guardados en la pila*)
+  actualArg=ref argsInicial,     (*Cantidad de argumentos guardados en la pila*)
   actualLocal=ref localsInicial, (*Cantidad de variables locales guardadas en la pila*)
   actualReg=ref regInicial
 }
@@ -151,11 +151,13 @@ fun procEntryExit1 (f : frame,body) =
     | natToReg 5 = r9
     | natToReg _ = raise Fail "No deberia pasar (natToReg)"       
 
-    fun accToMove ((InReg t),n) = if n<6 then (tigertree.MOVE (TEMP t,TEMP (natToReg n)))
-                                         else tigertree.MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))
-                                          (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
-        | accToMove ((InFrame k),n) = if n<6 then (tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n)))
-                                             else tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                                     
+    fun accToMove ((InReg t),n) =
+          if n<6 then (tigertree.MOVE (TEMP t,TEMP (natToReg n)))
+                 else tigertree.MOVE(TEMP t,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))
+                 (*A partir del fp hay que sumar porque estamos queriendo acceder a la pila del llamante*)
+        | accToMove ((InFrame k),n) =
+            if n<6 then (tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,TEMP (natToReg n)))
+                   else tigertree.MOVE (MEM(BINOP(PLUS, TEMP(fp), CONST k)) ,MEM(BINOP(PLUS, TEMP(fp), CONST (offArgs + (n-6)*localsGap))))                                                     
   in  if isMain then body else SEQ (seq (map accToMove lacc),body) end
 
 fun procEntryExit2 (f : frame,body : instr list) =  

@@ -49,6 +49,6 @@ val precoloredSet : string Splayset.set ref
 val isMoveRelated : tigertemp.temp -> bool
 
 (*funcion unificadora. construye "grafo" de flujo y "grafo" de interferencia *)
-val build : (tigerassem.instr list * int) -> unit
+val build : (tigerassem.instr list * bool) -> unit
 
 end

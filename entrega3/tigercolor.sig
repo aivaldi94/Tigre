@@ -141,9 +141,9 @@ val initializeTables : unit -> unit
 
 val pintar : tigertemp.temp -> tigertemp.temp
 
-val colorear' : (tigerassem.instr list * tigerframe.frame * tigertemp.temp Splayset.set) -> ((tigertemp.temp -> tigertemp.temp) * tigerassem.instr list)
+val colorear' : (tigerassem.instr list * tigerframe.frame * tigertemp.temp Splayset.set * bool) -> ((tigertemp.temp -> tigertemp.temp) * tigerassem.instr list)
 
-val colorear : (tigerassem.instr list * tigerframe.frame * int) -> ((tigertemp.temp -> tigertemp.temp) * tigerassem.instr list)
+val colorear : (tigerassem.instr list * tigerframe.frame * bool) -> ((tigertemp.temp -> tigertemp.temp) * tigerassem.instr list)
 
 end
 	

@@ -32,7 +32,7 @@ struct
 
   fun isMoveRelated t = member (!moveRelated,t)
   
-  fun build (instrList : instr list,pFlag) = 
+  fun build (instrList : instr list,debug) = 
     let
   
       val _ = precoloredList := ["rbx", sp, "rdi", "rsi", "rdx", "rcx", "r8", "r9", fp, 
@@ -49,8 +49,8 @@ struct
       val longNatToInstr = List.length(instrList) 
       val lastInstrNumber = longNatToInstr - 1
     
-      val _ = if (pFlag = 1) then (("\n\nnatToInstr\n");tigertab.tabPrintIntInstr(!natToInstr))
-                             else ()
+      val _ = if debug then (("\n\nnatToInstr\n");tigertab.tabPrintIntInstr(!natToInstr))
+                       else ()
         
       (* ---------------------------------------------------------------------------------------------------------- *)
         
@@ -61,8 +61,8 @@ struct
                             
       val _ = defs := (tabAAplica (id,fillDefs,!natToInstr))
       
-      val _ = if (pFlag = 1) then (print ("\ndefs\n");tigertab.tabPrintIntTempSet(!defs))
-                             else ()
+      val _ = if debug then (print ("\ndefs\n");tigertab.tabPrintIntTempSet(!defs))
+                       else ()
 
       (* ---------------------------------------------------------------------------------------------------------- *)
         
@@ -72,8 +72,8 @@ struct
                           | MOVE {assem=_,dst=_,src=s} => singleton String.compare s
                               
       val _ = uses := (tabAAplica (id,fillUses,!natToInstr))
-      val _ = if (pFlag = 1) then (print ("\nuses\n");tigertab.tabPrintIntTempSet(!uses))
-                             else ()
+      val _ = if debug then (print ("\nuses\n");tigertab.tabPrintIntTempSet(!uses))
+                       else ()
         
       (* ---------------------------------------------------------------------------------------------------------- *)
         
@@ -96,8 +96,8 @@ struct
               end
          
       val _ = succs := fillSuccs (instrList ,0)
-      val _ = if (pFlag = 1) then (print ("\nsuccs\n"); tigertab.tabPrintIntIntSet(!succs))
-                             else ()
+      val _ = if debug then (print ("\nsuccs\n"); tigertab.tabPrintIntIntSet(!succs))
+                       else ()
                       
       (* ---------------------------------------------------------------------------------------------------------- *)            
                                                                 
@@ -155,10 +155,10 @@ struct
       
       val (liveOut, liveOutOld, liveIn, liveInOld) = referenciar (liveness(tabNueva(),tabNueva(),tabNueva(),tabNueva()))
       
-      val _ = if (pFlag = 1) then (print ("\nliveIn\n");tigertab.tabPrintIntTempSet(!liveIn))
-                             else ()     
-      val _ = if (pFlag = 1) then (print ("\nliveOut\n");tigertab.tabPrintIntTempSet(!liveOut))
-                             else ()
+      val _ = if debug then (print ("\nliveIn\n");tigertab.tabPrintIntTempSet(!liveIn))
+                       else ()     
+      val _ = if debug then (print ("\nliveOut\n");tigertab.tabPrintIntTempSet(!liveOut))
+                       else ()
             
       (* ---------------------------------------------------------------------------------------------------------- *)            
 
@@ -245,8 +245,8 @@ struct
 
       val _ = interf := fillInterf(lastInstrNumber,tabNueva())
       
-      val _ = if (pFlag = 1) then (print ("\ninterf\n");tigertab.tabPrintTempTempSet(!interf))
-                             else ()
+      val _ = if debug then (print ("\ninterf\n");tigertab.tabPrintTempTempSet(!interf))
+                       else ()
       
       val _ = interfNoPrec := tabInserList(tabNueva(),List.filter (fn (t,_) => not(member(!precoloredSet,t))) (tabAList(!interf)))
         
@@ -271,10 +271,10 @@ struct
       val _ = workSetMoves := workSetMoves'
       val _ = moveSet := moveSet'
       val _ = allMoves := !workSetMoves
-      val _ = if (pFlag = 1) then (print ("\nworkSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves)))
-                             else ()
-      val _ = if (pFlag = 1) then (print("\nworkSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet))
-                             else ()
+      val _ = if debug then (print ("\nworkSetMoves\n"); List.app (fn n => print(Int.toString(n)^" ")) (listItems (!workSetMoves)))
+                       else ()
+      val _ = if debug then (print("\nworkSet Tabla\n"); tigertab.tabPrintTempIntSet(!moveSet))
+                       else ()
            
     in () end    
 end
