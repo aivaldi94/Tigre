@@ -59,7 +59,8 @@ struct
       val selectStackSet = addList(emptyStr,!selectStack)            
       fun f n =
         let
-          val lista = [!precoloredSet,!initial,!simplifyWorkSet,!freezeWorkSet,!spillWorkSet,setOfSpilled,!coalescedNodes,!coloredNodes,selectStackSet]
+          val lista = [!precoloredSet,!initial,!simplifyWorkSet,!freezeWorkSet,!spillWorkSet,setOfSpilled,
+                       !coalescedNodes,!coloredNodes,selectStackSet]
           val lInts = map (fn s => if member(s,n) then 1 else 0) lista                  
           val suma = List.foldl (fn (n1,n2) => n1 + n2) 0 lInts
           val _ = if suma <> 1 then (print (n^": ");List.app (fn n => print(its(n)^" ")) lInts;print("\n")) else ()
@@ -449,11 +450,13 @@ struct
            in (case (isDst andalso isSrc) of
                  true => let 
                            val newTemp = newtemp()
-                           val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+                           val newInstr1 = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",
+                                                 dst=[newTemp],src=[fp],jump=NONE}
                            val d' = map (fn n => if n = tmp then newTemp else n) d
                            val s' = map (fn n => if n = tmp then newTemp else n) s
                            val rewInstr = OPER {assem=a,dst=d',src=s',jump=j}
-                           val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,fp],jump=NONE}
+                           val newInstr2 = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",
+                                                 dst=[],src=[newTemp,fp],jump=NONE}
                            val (instructions, temps) = forEachSpilled(instr,tmp,offset)
                          in ([newInstr1,rewInstr,newInstr2]@instructions, newTemp::temps)end
                  | false => let
@@ -463,14 +466,16 @@ struct
                                     let
                                       val d' = map (fn n => if n = tmp then newTemp else n) d
                                       val rewInstr = OPER {assem=a,dst=d',src=s,jump=j}
-                                      val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,fp],jump=NONE}
+                                      val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],
+                                                           src=[newTemp,fp],jump=NONE}
                                       val (instructions, temps) = forEachSpilled(instr,tmp,offset)
                                     in ([rewInstr,newInstr]@instructions, newTemp::temps)end
                                   | false => (case isSrc of
                                                 true =>
                                                   let 
                                                     val s' = map (fn n => if n = tmp then newTemp else n) s
-                                                    val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+                                                    val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",
+                                                                         dst=[newTemp],src=[fp],jump=NONE}
                                                     val rewInstr = OPER {assem=a,dst=d,src=s',jump=j}
                                                     val (instructions, temps) = forEachSpilled(instr,tmp,offset)
                                                   in ([newInstr,rewInstr]@instructions, newTemp::temps)end
@@ -488,12 +493,14 @@ struct
                             in (case isDst of
                                   true => let
                                             val rewInstr = MOVE {assem=a,dst=newTemp,src=s}
-                                            val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],src=[newTemp,fp],jump=NONE}
+                                            val newInstr = OPER {assem="movq %'s0, "^its(offset)^"(%'s1)\n",dst=[],
+                                                                 src=[newTemp,fp],jump=NONE}
                                             val (instructions, temps) = forEachSpilled(instr,tmp,offset)
                                           in ([rewInstr,newInstr]@instructions, newTemp::temps) end
                                   | false => (case isSrc of
                                                 true => let
-                                                          val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",dst=[newTemp],src=[fp],jump=NONE}
+                                                          val newInstr = OPER {assem="movq "^its(offset)^"(%'s0), %'d0\n",
+                                                                               dst=[newTemp],src=[fp],jump=NONE}
                                                           val rewInstr = MOVE {assem=a,dst=d,src=newTemp}
                                                           val (instructions, temps) = forEachSpilled(instr,tmp,offset)
                                                         in ([newInstr,rewInstr]@instructions, newTemp::temps)end
@@ -600,7 +607,8 @@ struct
 
       val coloredNodes = assignColors(emptyStr, !selectStack)
 
-      val _ = if debug then(print ("Coalesced:\n Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes)) else ()
+      val _ = if debug then(print ("Coalesced:\n Nodo Alias\n"); Splayset.app  (fn n => print(n^" "^getAlias(n)^"\n")) (!coalescedNodes))
+                       else ()
       val _ = if debug then print "REESCRIBIENDO PROGRAMA\n" else ()
       
       val (instructions, temps) = rewriteProgram(newList,f,[])
@@ -628,7 +636,8 @@ struct
       val _ = makeWorkList(inicial)
       val _ = repeatUntil()     
       
-      val _ = if debug then (print("\nSelectStack: (long = "^its(length(!selectStack))^")\n");printList(!selectStack);print("\n")) else ()
+      val _ = if debug then (print("\nSelectStack: (long = "^its(length(!selectStack))^")\n");printList(!selectStack);print("\n"))
+                       else ()
       
       val coloredNodes = assignColors(emptyStr, !selectStack)
       

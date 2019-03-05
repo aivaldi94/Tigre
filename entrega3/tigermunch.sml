@@ -251,9 +251,11 @@ let
                     else emit (OPER {assem = "pushq $"^its(i*j)^"\n",src=[sp],dst=[sp],jump=NONE})); munchArgs(n+1,xs)) 
                     
     | munchArgs (n,(BINOP(DIV,e1,e2))::xs) =                                                                                                           
-        ((if (n<6) then emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; movq %rax, %"^(natToReg n)^"\n",src=[munchExp e1,munchExp e2, tigerframe.rv],
+        ((if (n<6) then emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; movq %rax, %"^(natToReg n)^"\n",
+                                    src=[munchExp e1,munchExp e2, tigerframe.rv],
                                     dst=[tigerframe.rv,tigerframe.rdx,natToReg n],jump=NONE}) 
-                   else emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; pushq %rax\n",src=[munchExp e1,munchExp e2, tigerframe.rv,sp],
+                   else emit (OPER {assem="movq %'s0,%'d0; cqto; idiv %'s1; movq %'s2, %'d1; pushq %rax\n",
+                                    src=[munchExp e1,munchExp e2, tigerframe.rv,sp],
                                     dst=[tigerframe.rv,tigerframe.rdx,sp],jump=NONE})))   
 
     | munchArgs (n,(BINOP(PLUS,TEMP t,e1))::xs) = 

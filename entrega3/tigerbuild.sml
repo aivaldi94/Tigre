@@ -200,48 +200,49 @@ struct
       (* ---------------------------------------------------------------------------------------------------------- *)            
                                                     
       fun fillInterf (~1,tab) = tab                           
-          | fillInterf (n,tab) =  let
-                                    val i = buscoEnTabla (n, !natToInstr)
-                                    fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
-                                                                    NONE => empty
-                                                                    | SOME c => c)
-                                    val liveouts = buscoEnTabla(n,!liveOut)
-                                    (* f inserta en la tabla la tupla (tmp, A union B)
-                                    donde A son todos los nodos n donde ya existe la arista (tmp,n)
-                                    B son todos los liveouts en la instrucción donde se define tmp*)                                    
-                                  in case i of
-                                        OPER {assem=a,dst=d,src=_,jump=_} => 
-                                            if List.null(d) then fillInterf(n-1,tab)
-                                                            else (let 
-                                                                    val dSet = Splayset.addList(empty, d)
-                                                                    fun f ((tmp, t) : (temp * interfTab)) : interfTab = 
-                                                                    let
-                                                                      val tmpSet = singleton String.compare tmp
-                                                                      val liveouts' = difference (liveouts,tmpSet)
-                                                                    in (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t))  end
-                                                                    (* tab' tiene todos las aristas que comienzan con di*)
-                                                                    val tab' = List.foldl f tab d
-                                                                    fun g (tmp,t) =
-                                                                        let val tmpSet = singleton String.compare tmp
-                                                                            val interfSet = difference (Splayset.union(findSet(tmp,tab'),dSet),tmpSet)
-                                                                        in tabRInserta (tmp,interfSet,t) end
-                                                                    val liveoutsList = Splayset.listItems liveouts          
-                                                                    val tab'' = List.foldl g tab' liveoutsList
-                                                                  in fillInterf(n-1,tab'') end)
-                                              
-                                        | LABEL {assem=a,lab=_} => fillInterf(n-1,tab)
-                                          
-                                        | MOVE {assem=a,dst=d,src=s} =>
-                                            let
-                                              val dSet = Splayset.addList(empty, [s,d])
-                                              val liveouts' = difference (liveouts,dSet)                                                  
-                                              fun f' (tmp, t) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t)) 
-                                              val tab' = f'(d,tab)        
-                                              val g = fn (tmp,t) => tabRInserta (tmp,Splayset.add(findSet(tmp,tab'),d),t)
-                                              val liveoutsList = Splayset.listItems liveouts'             
-                                              val tab'' = List.foldl g tab' liveoutsList                                              
-                                            in fillInterf(n-1,tab'') end
-                                  end     
+          | fillInterf (n,tab) = 
+              let
+                val i = buscoEnTabla (n, !natToInstr)
+                fun findSet (t : temp, tabla) = (case tabBusca (t,tabla) of
+                                                NONE => empty
+                                                | SOME c => c)
+                val liveouts = buscoEnTabla(n,!liveOut)
+                (* f inserta en la tabla la tupla (tmp, A union B)
+                donde A son todos los nodos n donde ya existe la arista (tmp,n)
+                B son todos los liveouts en la instrucción donde se define tmp*)                                    
+              in case i of
+                    OPER {assem=a,dst=d,src=_,jump=_} => 
+                        if List.null(d) then fillInterf(n-1,tab)
+                                        else (let 
+                                                val dSet = Splayset.addList(empty, d)
+                                                fun f ((tmp, t) : (temp * interfTab)) : interfTab = 
+                                                let
+                                                  val tmpSet = singleton String.compare tmp
+                                                  val liveouts' = difference (liveouts,tmpSet)
+                                                in (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t))  end
+                                                (* tab' tiene todos las aristas que comienzan con di*)
+                                                val tab' = List.foldl f tab d
+                                                fun g (tmp,t) =
+                                                    let val tmpSet = singleton String.compare tmp
+                                                        val interfSet = difference (Splayset.union(findSet(tmp,tab'),dSet),tmpSet)
+                                                    in tabRInserta (tmp,interfSet,t) end
+                                                val liveoutsList = Splayset.listItems liveouts          
+                                                val tab'' = List.foldl g tab' liveoutsList
+                                              in fillInterf(n-1,tab'') end)
+                          
+                    | LABEL {assem=a,lab=_} => fillInterf(n-1,tab)
+                      
+                    | MOVE {assem=a,dst=d,src=s} =>
+                        let
+                          val dSet = Splayset.addList(empty, [s,d])
+                          val liveouts' = difference (liveouts,dSet)                                                  
+                          fun f' (tmp, t) : interfTab = (tabRInserta (tmp,union(findSet(tmp,tab),liveouts'),t)) 
+                          val tab' = f'(d,tab)        
+                          val g = fn (tmp,t) => tabRInserta (tmp,Splayset.add(findSet(tmp,tab'),d),t)
+                          val liveoutsList = Splayset.listItems liveouts'             
+                          val tab'' = List.foldl g tab' liveoutsList                                              
+                        in fillInterf(n-1,tab'') end
+              end     
 
       val _ = interf := fillInterf(lastInstrNumber,tabNueva())
       

@@ -17,9 +17,7 @@ val linearize : tigertree.stm -> tigertree.stm list
    Also produce the "label" to which control will be passed
    upon exit.
 *)
-(*  ORIGINAL
-val basicBlocks :
-  tigertree.stm list -> (tigertree.stm list list * tigertree.label) *)
+
 val basicBlocks :
 	tigertree.stm list -> (tigertree.stm list list * tigertemp.label)
 
@@ -32,10 +30,7 @@ val basicBlocks :
    as possible are eliminated by falling through into T.LABEL(lab).
 *)
 
-(*  ORIGINAL
-val traceSchedule :
-	tigertree.stm list list * tigertree.label -> tigertree.stm list
-*)
+
 val traceSchedule :
   tigertree.stm list list * tigertemp.label -> tigertree.stm list
 
